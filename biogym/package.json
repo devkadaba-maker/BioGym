@@ -11,12 +11,14 @@
   "dependencies": {
     "@clerk/nextjs": "^6.36.5",
     "@google/generative-ai": "^0.24.1",
+    "heatmap.js": "^2.0.5",
     "next": "16.1.1",
     "react": "19.2.3",
     "react-dom": "19.2.3"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/heatmap.js": "^2.0.41",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

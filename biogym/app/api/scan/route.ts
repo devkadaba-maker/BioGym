@@ -34,7 +34,8 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'No response from Gemini' }, { status: 500 });
         }
 
-        const parsedData = extractJson(text);
+        const jsonString = extractJson(text);
+        const parsedData = JSON.parse(jsonString);
         return NextResponse.json(parsedData);
     } catch (error) {
         console.error('Gemini API error:', error);

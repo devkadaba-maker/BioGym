@@ -3,7 +3,8 @@ import { GeminiMasterSystemPrompt } from "@/lib/gemini";
 import { NextRequest, NextResponse } from "next/server";
 import { extractJson } from "@/lib/gemini";
 
-const genAi = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY!);
+const genAi = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+
 
 export async function POST(request: NextRequest) {
     try {
@@ -18,7 +19,7 @@ export async function POST(request: NextRequest) {
         const base64 = Buffer.from(imageBuffer).toString('base64');
 
         const model = genAi.getGenerativeModel({
-            model: "gemini-2.5-pro-exp", // Use stable model; 3.0-pro-exp may not exist yet [web:30]
+            model: "gemini-2.5-flash",
             systemInstruction: GeminiMasterSystemPrompt
         });
 

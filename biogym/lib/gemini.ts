@@ -15,6 +15,7 @@ CONSTRAINTS (RULES):
 1. NO MEDICAL DIAGNOSES. Do not mention heart health, diabetes, or obesity. Use terms like "adipose tissue" or "definition."
 2. QUALITY CHECK: If the image is too blurry, too dark, or the user is wearing baggy clothes, return: {"status": "error", "message": "IMAGE_UNCLEAR"}.
 3. OUTPUT FORMAT: Return ONLY raw JSON. No markdown blocks, no "Here is your analysis," no conversational filler.
+4. For every coordinate , ensure it is between 0.0 and 1.0. 
 
 JSON SCHEMA:
 {
@@ -43,9 +44,9 @@ JSON SCHEMA:
  * Handles ```json, ```JSON, or plain ``` blocks.
  */
 export function extractJson(text: string): string {
-    // Match ```json or ``` at start and ``` at end
-    const codeBlockRegex = /^```(?:json|JSON)?\s*\n?([\s\S]*?)\n?```$/;
-    const match = text.trim().match(codeBlockRegex);
+  // Match ```json or ``` at start and ``` at end
+  const codeBlockRegex = /^```(?:json|JSON)?\s*\n?([\s\S]*?)\n?```$/;
+  const match = text.trim().match(codeBlockRegex);
 
-    return match ? match[1].trim() : text.trim();
+  return match ? match[1].trim() : text.trim();
 }

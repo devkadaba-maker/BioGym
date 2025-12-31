@@ -1,6 +1,6 @@
-import { SignIn } from "@clerk/nextjs";
+import { SignUp } from "@clerk/nextjs";
 
-export default function SignInPage() {
+export default function SignUpPage() {
     return (
         <div className="min-h-screen bg-[#1a1a1a] flex items-center justify-center relative overflow-hidden">
             {/* Background gradient effects */}
@@ -18,7 +18,7 @@ export default function SignInPage() {
                     <span className="text-2xl font-bold text-white">BioGym</span>
                 </div>
 
-                <SignIn
+                <SignUp
                     appearance={{
                         elements: {
                             rootBox: "mx-auto",

@@ -1,37 +1,10 @@
 import Link from "next/link";
 import Image from "next/image";
+import CTAButtons from "@/components/CTAButtons";
 
 export default function Home() {
   return (
     <main className="min-h-screen bg-[#1a1a1a] relative">
-      {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 px-6 py-4 glass">
-        <nav className="max-w-7xl mx-auto flex items-center justify-between">
-          {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 text-white">
-            <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M8 12H24M8 20H24M12 8V24M20 8V24" stroke="#D4FF00" strokeWidth="2.5" strokeLinecap="round" />
-            </svg>
-            <span className="text-xl font-bold">BioGym</span>
-          </Link>
-
-          {/* Nav Links */}
-          <div className="hidden md:flex items-center gap-8">
-            <Link href="#features" className="text-gray-300 hover:text-white transition-colors text-sm">
-              Product
-            </Link>
-            <Link href="#contact" className="text-gray-300 hover:text-white transition-colors text-sm">
-              Contact
-            </Link>
-          </div>
-
-          {/* Download Button */}
-          <Link href="/sign-in" className="btn-secondary hidden sm:flex">
-            Sign in
-          </Link>
-        </nav>
-      </header>
-
       {/* Hero Section */}
       <section className="relative min-h-screen flex items-center">
         {/* Background Image */}
@@ -92,12 +65,7 @@ export default function Home() {
             </p>
 
             {/* CTA Button */}
-            <Link href="/sign-in" className="btn-primary animate-slide-up-delay-3">
-              Start for Free
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                <path d="M5 15L15 5M15 5H8M15 5V12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </Link>
+            <CTAButtons variant="hero" />
           </div>
         </div>
 
@@ -366,12 +334,7 @@ export default function Home() {
             Start your physique evolution journey today.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/sign-in" className="btn-primary text-lg px-10 py-4">
-              Start for Free
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                <path d="M5 15L15 5M15 5H8M15 5V12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </Link>
+            <CTAButtons variant="section" />
             <Link href="/dashboard" className="btn-secondary text-lg px-10 py-4">
               View Demo
             </Link>

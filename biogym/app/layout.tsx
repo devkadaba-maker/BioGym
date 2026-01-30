@@ -1,6 +1,7 @@
 import { type Metadata } from 'next'
 import { ClerkProvider } from '@clerk/nextjs'
 import { Inter, Geist_Mono } from 'next/font/google'
+import { Toaster } from 'sonner'
 import './globals.css'
 import Navbar from '@/components/Navbar'
 import { ThemeProvider } from '@/context/ThemeContext'
@@ -42,6 +43,7 @@ export default function RootLayout({
           <ThemeProvider>
             <Navbar />
             {children}
+            <Toaster position="top-center" richColors />
           </ThemeProvider>
         </body>
       </html>

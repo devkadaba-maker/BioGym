@@ -297,3 +297,32 @@ textarea:focus {
     height: 60px;
   }
 }
+
+/* ScanLab Animations */
+@keyframes scanFramePulse {
+  0%, 100% {
+    opacity: 1;
+    border-color: #D4FF00;
+  }
+  50% {
+    opacity: 0.6;
+    border-color: #a8e600;
+  }
+}
+
+.scan-frame-pulse {
+  animation: scanFramePulse 2s ease-in-out infinite;
+}
+
+@keyframes scanButtonGlow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(212, 255, 0, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(212, 255, 0, 0.4);
+  }
+}
+
+.scan-button-glow {
+  animation: scanButtonGlow 2s ease-in-out infinite;
+}

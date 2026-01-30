@@ -116,7 +116,7 @@ export default function Home() {
       </section>
 
       {/* Features Section */}
-      <section id="features" className="py-24 px-6 relative">
+      <section id="features" className="py-12 px-6 relative overflow-hidden">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-20">
             <h2 className="text-4xl md:text-5xl font-bold mb-6">
@@ -127,83 +127,84 @@ export default function Home() {
               to deliver precise, actionable insights.
             </p>
           </div>
-        </div>
 
-        {/* Feature 1: Vision-Based Physique Mapping */}
-        <div className="feature-grid mb-20">
-          <div className="feature-card p-8 md:p-12">
-            <div className="feature-icon mb-6">
-              <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
-                <circle cx="24" cy="24" r="20" stroke="#D4FF00" strokeWidth="2" />
-                <circle cx="24" cy="24" r="8" fill="#D4FF00" fillOpacity="0.2" stroke="#D4FF00" strokeWidth="2" />
-                <path d="M24 4V12M24 36V44M4 24H12M36 24H44" stroke="#D4FF00" strokeWidth="2" strokeLinecap="round" />
-              </svg>
-            </div>
-            <h3 className="text-2xl md:text-3xl font-bold mb-4">Vision-Based Physique Mapping</h3>
-            <p className="text-gray-400 mb-8 text-lg">
-              Upload a photo and our AI performs a complete non-invasive anatomical scan,
-              mapping your muscle groups with surgical precision.
-            </p>
-            <div className="grid md:grid-cols-3 gap-6">
-              <div className="p-6 bg-[#1a1a1a] rounded-2xl border border-[#2a2a2a]">
-                <div className="text-[#D4FF00] font-bold mb-2">Muscle Density</div>
-                <p className="text-gray-400 text-sm">Estimates tissue density for Chest, Arms, and Core on a 1-10 scale</p>
+
+          {/* Feature 1: Vision-Based Physique Mapping */}
+          <div className="feature-grid mb-20">
+            <div className="feature-card p-8 md:p-12">
+              <div className="feature-icon mb-6">
+                <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+                  <circle cx="24" cy="24" r="20" stroke="#D4FF00" strokeWidth="2" />
+                  <circle cx="24" cy="24" r="8" fill="#D4FF00" fillOpacity="0.2" stroke="#D4FF00" strokeWidth="2" />
+                  <path d="M24 4V12M24 36V44M4 24H12M36 24H44" stroke="#D4FF00" strokeWidth="2" strokeLinecap="round" />
+                </svg>
               </div>
-              <div className="p-6 bg-[#1a1a1a] rounded-2xl border border-[#2a2a2a]">
-                <div className="text-[#D4FF00] font-bold mb-2">Anatomical Hotspots</div>
-                <p className="text-gray-400 text-sm">Maps coordinates for Pectorals, Biceps, Abdominals with detailed feedback</p>
-              </div>
-              <div className="p-6 bg-[#1a1a1a] rounded-2xl border border-[#2a2a2a]">
-                <div className="text-[#D4FF00] font-bold mb-2">Privacy Mask</div>
-                <p className="text-gray-400 text-sm">Auto-detects facial regions and applies high-fidelity blur protection</p>
+              <h3 className="text-2xl md:text-3xl font-bold mb-4">Vision-Based Physique Mapping</h3>
+              <p className="text-gray-400 mb-8 text-lg">
+                Upload a photo and our AI performs a complete non-invasive anatomical scan,
+                mapping your muscle groups with surgical precision.
+              </p>
+              <div className="grid md:grid-cols-3 gap-6">
+                <div className="p-6 bg-[#1a1a1a] rounded-2xl border border-[#2a2a2a]">
+                  <div className="text-[#D4FF00] font-bold mb-2">Muscle Density</div>
+                  <p className="text-gray-400 text-sm">Estimates tissue density for Chest, Arms, and Core on a 1-10 scale</p>
+                </div>
+                <div className="p-6 bg-[#1a1a1a] rounded-2xl border border-[#2a2a2a]">
+                  <div className="text-[#D4FF00] font-bold mb-2">Anatomical Hotspots</div>
+                  <p className="text-gray-400 text-sm">Maps coordinates for Pectorals, Biceps, Abdominals with detailed feedback</p>
+                </div>
+                <div className="p-6 bg-[#1a1a1a] rounded-2xl border border-[#2a2a2a]">
+                  <div className="text-[#D4FF00] font-bold mb-2">Privacy Mask</div>
+                  <p className="text-gray-400 text-sm">Auto-detects facial regions and applies high-fidelity blur protection</p>
+                </div>
               </div>
             </div>
           </div>
-        </div>
 
-        {/* Feature 2: Intelligent Training Protocols */}
-        <div className="feature-grid mb-20">
-          <div className="feature-card p-8 md:p-12">
-            <div className="feature-icon mb-6">
-              <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
-                <path d="M8 36L16 28L24 32L32 20L40 24" stroke="#D4FF00" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-                <path d="M32 20H40V28" stroke="#D4FF00" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-                <rect x="6" y="8" width="36" height="32" rx="4" stroke="#D4FF00" strokeWidth="2" strokeOpacity="0.3" />
-              </svg>
-            </div>
-            <h3 className="text-2xl md:text-3xl font-bold mb-4">Intelligent Training Protocols</h3>
-            <p className="text-gray-400 mb-8 text-lg">
-              The app doesn&apos;t just show data—it provides actionable insights based on your
-              density scores and identified weak points.
-            </p>
-            <div className="grid md:grid-cols-2 gap-6">
-              <div className="p-6 bg-[#1a1a1a] rounded-2xl border border-[#2a2a2a]">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-full bg-[#D4FF00]/10 flex items-center justify-center">
-                    <svg width="20" height="20" viewBox="0 0 20 20" fill="#D4FF00">
-                      <path d="M10 2L12.5 7H17.5L13.5 11L15 17L10 14L5 17L6.5 11L2.5 7H7.5L10 2Z" />
-                    </svg>
-                  </div>
-                  <div className="text-white font-bold">Targeted Exercises</div>
-                </div>
-                <p className="text-gray-400 text-sm">
-                  Specific movements like Weighted Dips and Hanging Leg Raises designed to
-                  improve your identified weak points.
-                </p>
+          {/* Feature 2: Intelligent Training Protocols */}
+          <div className="feature-grid mb-20">
+            <div className="feature-card p-8 md:p-12">
+              <div className="feature-icon mb-6">
+                <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+                  <path d="M8 36L16 28L24 32L32 20L40 24" stroke="#D4FF00" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M32 20H40V28" stroke="#D4FF00" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                  <rect x="6" y="8" width="36" height="32" rx="4" stroke="#D4FF00" strokeWidth="2" strokeOpacity="0.3" />
+                </svg>
               </div>
-              <div className="p-6 bg-[#1a1a1a] rounded-2xl border border-[#2a2a2a]">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-full bg-[#D4FF00]/10 flex items-center justify-center">
-                    <svg width="20" height="20" viewBox="0 0 20 20" fill="#D4FF00">
-                      <rect x="2" y="4" width="16" height="12" rx="2" />
-                    </svg>
+              <h3 className="text-2xl md:text-3xl font-bold mb-4">Intelligent Training Protocols</h3>
+              <p className="text-gray-400 mb-8 text-lg">
+                The app doesn&apos;t just show data—it provides actionable insights based on your
+                density scores and identified weak points.
+              </p>
+              <div className="grid md:grid-cols-2 gap-6">
+                <div className="p-6 bg-[#1a1a1a] rounded-2xl border border-[#2a2a2a]">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 rounded-full bg-[#D4FF00]/10 flex items-center justify-center">
+                      <svg width="20" height="20" viewBox="0 0 20 20" fill="#D4FF00">
+                        <path d="M10 2L12.5 7H17.5L13.5 11L15 17L10 14L5 17L6.5 11L2.5 7H7.5L10 2Z" />
+                      </svg>
+                    </div>
+                    <div className="text-white font-bold">Targeted Exercises</div>
                   </div>
-                  <div className="text-white font-bold">Named Protocols</div>
+                  <p className="text-gray-400 text-sm">
+                    Specific movements like Weighted Dips and Hanging Leg Raises designed to
+                    improve your identified weak points.
+                  </p>
                 </div>
-                <p className="text-gray-400 text-sm">
-                  Custom-labeled routines like &quot;Definition &amp; Strength Maintenance&quot;
-                  tailored to your current physical state.
-                </p>
+                <div className="p-6 bg-[#1a1a1a] rounded-2xl border border-[#2a2a2a]">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 rounded-full bg-[#D4FF00]/10 flex items-center justify-center">
+                      <svg width="20" height="20" viewBox="0 0 20 20" fill="#D4FF00">
+                        <rect x="2" y="4" width="16" height="12" rx="2" />
+                      </svg>
+                    </div>
+                    <div className="text-white font-bold">Named Protocols</div>
+                  </div>
+                  <p className="text-gray-400 text-sm">
+                    Custom-labeled routines like &quot;Definition &amp; Strength Maintenance&quot;
+                    tailored to your current physical state.
+                  </p>
+                </div>
               </div>
             </div>
           </div>

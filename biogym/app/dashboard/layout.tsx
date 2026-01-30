@@ -20,10 +20,10 @@ export default function DashboardLayout({
 
     // Searchable items
     const searchableItems = [
-        { label: "Scan Lab", href: "/dashboard", keywords: ["scan", "upload", "photo", "analysis"] },
+        { label: "Scan Lab", href: "/dashboard/scan", keywords: ["scan", "upload", "photo", "analysis"] },
         { label: "Bio-Insights", href: "/dashboard/insights", keywords: ["insights", "metrics", "density", "score"] },
         { label: "Training Lab", href: "/dashboard/training", keywords: ["training", "workout", "exercise", "routine"] },
-        { label: "Evolution Hub", href: "/dashboard/evolution", keywords: ["evolution", "progress", "history", "timeline"] },
+        { label: "Progress", href: "/dashboard/progress", keywords: ["progress", "analytics", "history", "charts", "milestones"] },
     ];
 
     const handleSearch = (query: string) => {
@@ -58,7 +58,7 @@ export default function DashboardLayout({
     const navItems = [
         {
             name: "Scan Lab",
-            href: "/dashboard",
+            href: "/dashboard/scan",
             icon: (
                 <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5">
                     <circle cx="10" cy="10" r="8" />
@@ -88,8 +88,8 @@ export default function DashboardLayout({
             ),
         },
         {
-            name: "Evolution Hub",
-            href: "/dashboard/evolution",
+            name: "Progress",
+            href: "/dashboard/progress",
             icon: (
                 <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5">
                     <path d="M2 18L8 12L12 16L18 6" />
@@ -127,12 +127,12 @@ export default function DashboardLayout({
                                 key={item.href}
                                 href={item.href}
                                 className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${isActive
-                                        ? isLight
-                                            ? "bg-gray-100 text-gray-900"
-                                            : "bg-[#2a2a2a] text-white"
-                                        : isLight
-                                            ? "text-gray-500 hover:text-gray-900 hover:bg-gray-50"
-                                            : "text-gray-400 hover:text-white hover:bg-[#2a2a2a]/50"
+                                    ? isLight
+                                        ? "bg-gray-100 text-gray-900"
+                                        : "bg-[#2a2a2a] text-white"
+                                    : isLight
+                                        ? "text-gray-500 hover:text-gray-900 hover:bg-gray-50"
+                                        : "text-gray-400 hover:text-white hover:bg-[#2a2a2a]/50"
                                     }`}
                             >
                                 {item.icon}
@@ -243,7 +243,7 @@ export default function DashboardLayout({
 
                             {/* Scan Button */}
                             <Link
-                                href="/dashboard"
+                                href="/dashboard/scan"
                                 className="flex items-center gap-2 px-5 py-2 bg-[#1a1a1a] text-white rounded-full font-medium hover:bg-[#2a2a2a] transition-all"
                             >
                                 Scan

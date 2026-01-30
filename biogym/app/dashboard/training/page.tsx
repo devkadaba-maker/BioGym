@@ -271,7 +271,7 @@ export default function TrainingLabPage() {
     }
 
     return (
-        <div className="h-[calc(100vh-100px)] flex flex-col lg:flex-row gap-4 p-4">
+        <div className="min-h-[calc(100vh-120px)] lg:h-[calc(100vh-100px)] flex flex-col lg:flex-row gap-4 p-0 lg:p-4 pb-24 lg:pb-4">
             {/* LEFT: Exercise Demo & Controls */}
             <motion.div
                 initial={{ opacity: 0, x: -30 }}
@@ -479,7 +479,7 @@ export default function TrainingLabPage() {
                 </div>
 
                 {/* Exercise List */}
-                <div className="flex-1 overflow-y-auto space-y-2">
+                <div className="lg:flex-1 lg:overflow-y-auto space-y-2">
                     {exercises.map((exercise, index) => {
                         const isString = typeof exercise === "string";
                         const name = isString ? exercise : (exercise.name || "Exercise");

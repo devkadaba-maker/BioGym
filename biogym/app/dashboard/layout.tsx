@@ -103,8 +103,8 @@ export default function DashboardLayout({
 
     return (
         <div className={`min-h-screen transition-colors duration-300 ${isLight ? "bg-[#f5f5f5]" : "bg-[#0f0f0f]"}`}>
-            {/* Sidebar */}
-            <aside className={`fixed left-0 top-0 bottom-0 w-60 flex flex-col z-40 border-r transition-colors duration-300 ${isLight ? "bg-white border-gray-200" : "bg-[#1a1a1a] border-[#2a2a2a]"
+            {/* Sidebar (Desktop Only) */}
+            <aside className={`hidden lg:flex fixed left-0 top-0 bottom-0 w-60 flex-col z-40 border-r transition-colors duration-300 ${isLight ? "bg-white border-gray-200" : "bg-[#1a1a1a] border-[#2a2a2a]"
                 }`}>
                 {/* Logo */}
                 <div className="p-6">
@@ -180,21 +180,62 @@ export default function DashboardLayout({
                 </div>
             </aside>
 
+            {/* Mobile Bottom Navigation */}
+            <nav className={`lg:hidden fixed bottom-0 left-0 right-0 z-50 px-6 py-3 border-t backdrop-blur-lg transition-colors duration-300 ${isLight ? "bg-white/90 border-gray-200" : "bg-[#0f0f0f]/90 border-[#2a2a2a]"
+                }`}>
+                <div className="flex items-center justify-between">
+                    {navItems.map((item) => {
+                        const isActive = pathname === item.href;
+                        return (
+                            <Link
+                                key={item.href}
+                                href={item.href}
+                                className={`flex flex-col items-center gap-1 transition-colors ${isActive
+                                    ? isLight ? "text-gray-900" : "text-[#D4FF00]"
+                                    : isLight ? "text-gray-400" : "text-gray-500"
+                                    }`}
+                            >
+                                <div className={`${isActive ? "scale-110" : "scale-100"} transition-transform`}>
+                                    {item.icon}
+                                </div>
+                                <span className="text-[10px] font-medium">{item.name}</span>
+                            </Link>
+                        );
+                    })}
+                    {/* Mobile Menu / Profile */}
+                    <Link
+                        href="/dashboard/scan"
+                        className={`flex flex-col items-center gap-1 transition-colors ${pathname === "/dashboard/scan"
+                            ? isLight ? "text-gray-900" : "text-[#D4FF00]"
+                            : isLight ? "text-gray-400" : "text-gray-500"
+                            }`}
+                    >
+                        <UserButton
+                            appearance={{
+                                elements: {
+                                    avatarBox: "w-8 h-8"
+                                }
+                            }}
+                        />
+                    </Link>
+                </div>
+            </nav>
+
             {/* Main Content */}
-            <main className="ml-60 min-h-screen">
+            <main className="lg:ml-60 min-h-screen pb-20 lg:pb-0">
                 {/* Top Header */}
-                <header className={`sticky top-0 z-30 backdrop-blur-xl px-8 py-4 border-b transition-colors duration-300 ${isLight ? "bg-white/80 border-gray-200" : "bg-[#0f0f0f]/80 border-[#2a2a2a]"
+                <header className={`sticky top-0 z-30 backdrop-blur-xl px-4 lg:px-8 py-4 border-b transition-colors duration-300 ${isLight ? "bg-white/80 border-gray-200" : "bg-[#0f0f0f]/80 border-[#2a2a2a]"
                     }`}>
                     <div className="flex items-center justify-between">
-                        {/* Page Title */}
-                        <h1 className={`text-2xl font-bold ${isLight ? "text-gray-900" : "text-white"}`}>
+                        {/* Page Title - Hidden on small mobile if search is active? No, keep it simple */}
+                        <h1 className={`text-xl lg:text-2xl font-bold truncate mr-4 ${isLight ? "text-gray-900" : "text-white"}`}>
                             {navItems.find((item) => item.href === pathname)?.name || "Dashboard"}
                         </h1>
 
                         {/* Right Side */}
-                        <div className="flex items-center gap-4">
-                            {/* Search Bar */}
-                            <div className="relative">
+                        <div className="flex items-center gap-2 lg:gap-4">
+                            {/* Search Bar - Collapsed on mobile to icon? keeping simple for now */}
+                            <div className="relative hidden sm:block">
                                 <div className={`flex items-center gap-2 px-4 py-2 rounded-full border transition-colors ${isLight ? "bg-gray-50 border-gray-200" : "bg-[#1a1a1a] border-[#2a2a2a]"
                                     }`}>
                                     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke={isLight ? "#9ca3af" : "#6b7280"} strokeWidth="1.5">
@@ -203,13 +244,13 @@ export default function DashboardLayout({
                                     </svg>
                                     <input
                                         type="text"
-                                        placeholder="Search anything..."
+                                        placeholder="Search..."
                                         value={searchQuery}
                                         onChange={(e) => handleSearch(e.target.value)}
                                         onKeyDown={handleSearchSubmit}
                                         onBlur={() => setTimeout(() => setShowResults(false), 200)}
                                         onFocus={() => searchQuery && setShowResults(true)}
-                                        className={`bg-transparent border-none outline-none w-48 text-sm ${isLight ? "text-gray-900 placeholder:text-gray-400" : "text-white placeholder:text-gray-500"
+                                        className={`bg-transparent border-none outline-none w-32 lg:w-48 text-sm ${isLight ? "text-gray-900 placeholder:text-gray-400" : "text-white placeholder:text-gray-500"
                                             }`}
                                     />
                                 </div>
@@ -241,28 +282,40 @@ export default function DashboardLayout({
                                 )}
                             </div>
 
-                            {/* Scan Button */}
+                            {/* Scan Button - Hidden on mobile since it is in bottom nav */}
                             <Link
                                 href="/dashboard/scan"
-                                className="flex items-center gap-2 px-5 py-2 bg-[#1a1a1a] text-white rounded-full font-medium hover:bg-[#2a2a2a] transition-all"
+                                className="hidden sm:flex items-center gap-2 px-5 py-2 bg-[#1a1a1a] text-white rounded-full font-medium hover:bg-[#2a2a2a] transition-all"
                             >
                                 Scan
                             </Link>
 
-                            {/* Profile */}
-                            <UserButton
-                                appearance={{
-                                    elements: {
-                                        avatarBox: "w-10 h-10",
-                                    },
-                                }}
-                            />
+                            {/* Profile - Hidden on mobile main header to save space, moved to bottom? Or keep it. 
+                                Actually keep it, good for quick access. 
+                            */}
+                            <div className="hidden sm:block">
+                                <UserButton
+                                    appearance={{
+                                        elements: {
+                                            avatarBox: "w-8 h-8 lg:w-10 lg:h-10",
+                                        },
+                                    }}
+                                />
+                            </div>
+
+                            {/* Mobile Theme Toggle (since sidebar is hidden) */}
+                            <button
+                                onClick={toggleTheme}
+                                className={`sm:hidden p-2 rounded-full ${isLight ? "bg-gray-100 text-gray-600" : "bg-[#1a1a1a] text-white"}`}
+                            >
+                                {theme === 'light' ? '🌙' : '☀️'}
+                            </button>
                         </div>
                     </div>
                 </header>
 
                 {/* Page Content */}
-                <div className="p-8">{children}</div>
+                <div className="p-4 lg:p-8">{children}</div>
             </main>
         </div>
     );

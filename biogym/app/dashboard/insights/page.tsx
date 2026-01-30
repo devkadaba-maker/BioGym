@@ -161,9 +161,9 @@ export default function BioInsightsPage() {
     ];
 
     return (
-        <div className="h-[calc(100vh-120px)] flex flex-col">
+        <div className="min-h-[calc(100vh-120px)] lg:h-[calc(100vh-120px)] flex flex-col">
             {/* Main Content - Full Width Grid */}
-            <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-4 p-4">
+            <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-4 p-0 lg:p-4">
 
                 {/* LEFT SIDE - Heatmap (Full Height) */}
                 <motion.div

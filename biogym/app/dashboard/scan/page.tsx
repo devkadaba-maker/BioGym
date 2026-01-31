@@ -94,11 +94,49 @@ export default function ScanLabPage() {
         };
     }, []);
 
+    // Attach stream to video when camera becomes active and video element exists
+    useEffect(() => {
+        if (!isCameraActive || !streamRef.current || !videoRef.current) return;
+
+        const video = videoRef.current;
+        const stream = streamRef.current;
+
+        // Only set srcObject if not already set
+        if (video.srcObject !== stream) {
+            video.srcObject = stream;
+        }
+
+        const handleCanPlay = () => {
+            setIsCameraReady(true);
+            setIsCameraLoading(false);
+        };
+
+        // Check if already ready
+        if (video.readyState >= 3) {
+            handleCanPlay();
+        } else {
+            video.addEventListener('canplay', handleCanPlay);
+        }
+
+        // Try to play
+        video.play().catch(() => { });
+
+        // Fallback timeout
+        const timeout = setTimeout(() => {
+            setIsCameraReady(true);
+            setIsCameraLoading(false);
+        }, 2000);
+
+        return () => {
+            video.removeEventListener('canplay', handleCanPlay);
+            clearTimeout(timeout);
+        };
+    }, [isCameraActive]);
+
     const startCamera = async () => {
         setIsCameraLoading(true);
         setIsCameraReady(false);
         try {
-            // Use back camera (environment) for physique capture
             const stream = await navigator.mediaDevices.getUserMedia({
                 video: {
                     facingMode: { ideal: "environment" },
@@ -107,49 +145,10 @@ export default function ScanLabPage() {
                 }
             });
             streamRef.current = stream;
-            setIsCameraActive(true);
-
-            if (videoRef.current) {
-                const video = videoRef.current;
-                video.srcObject = stream;
-
-                // Function to mark camera as ready
-                const markReady = () => {
-                    setIsCameraReady(true);
-                    setIsCameraLoading(false);
-                };
-
-                // Use canplay event - more reliable than loadedmetadata
-                const handleCanPlay = () => {
-                    video.removeEventListener('canplay', handleCanPlay);
-                    markReady();
-                };
-
-                video.addEventListener('canplay', handleCanPlay);
-
-                // Try to play immediately
-                try {
-                    await video.play();
-                    // If play succeeds and video has dimensions, we're ready
-                    if (video.videoWidth > 0) {
-                        video.removeEventListener('canplay', handleCanPlay);
-                        markReady();
-                    }
-                } catch {
-                    // Autoplay blocked - still wait for canplay
-                }
-
-                // Fallback timeout - if nothing works in 3 seconds, show camera anyway
-                setTimeout(() => {
-                    if (!streamRef.current) return; // Camera was stopped
-                    setIsCameraReady(true);
-                    setIsCameraLoading(false);
-                }, 3000);
-            }
+            setIsCameraActive(true); // This triggers re-render, then useEffect attaches stream
         } catch {
             setHasCamera(false);
             setIsCameraLoading(false);
-            setIsCameraActive(false);
             fileInputRef.current?.click();
         }
     };

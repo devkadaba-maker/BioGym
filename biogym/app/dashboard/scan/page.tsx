@@ -67,6 +67,7 @@ export default function ScanLabPage() {
     const [isCameraLoading, setIsCameraLoading] = useState(false);
     const [isCameraReady, setIsCameraReady] = useState(false);
     const [isDragging, setIsDragging] = useState(false);
+    const [facingMode, setFacingMode] = useState<"environment" | "user">("environment");
 
     const videoRef = useRef<HTMLVideoElement>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -131,7 +132,7 @@ export default function ScanLabPage() {
             video.removeEventListener('canplay', handleCanPlay);
             clearTimeout(timeout);
         };
-    }, [isCameraActive]);
+    }, [isCameraActive, facingMode]);
 
     const startCamera = async () => {
         setIsCameraLoading(true);
@@ -139,7 +140,7 @@ export default function ScanLabPage() {
         try {
             const stream = await navigator.mediaDevices.getUserMedia({
                 video: {
-                    facingMode: { ideal: "environment" },
+                    facingMode: { ideal: facingMode },
                     width: { ideal: 1280 },
                     height: { ideal: 720 }
                 }
@@ -162,6 +163,32 @@ export default function ScanLabPage() {
         setIsCameraReady(false);
         setIsCameraLoading(false);
     }, []);
+
+    const flipCamera = async () => {
+        // Stop current stream
+        if (streamRef.current) {
+            streamRef.current.getTracks().forEach(track => track.stop());
+            streamRef.current = null;
+        }
+        // Toggle facing mode and restart
+        const newMode = facingMode === "environment" ? "user" : "environment";
+        setFacingMode(newMode);
+        setIsCameraLoading(true);
+        setIsCameraReady(false);
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({
+                video: {
+                    facingMode: { ideal: newMode },
+                    width: { ideal: 1280 },
+                    height: { ideal: 720 }
+                }
+            });
+            streamRef.current = stream;
+            // useEffect will attach the stream
+        } catch {
+            setIsCameraLoading(false);
+        }
+    };
 
     const captureFromCamera = () => {
         if (!videoRef.current || !canvasRef.current) return;
@@ -466,19 +493,19 @@ export default function ScanLabPage() {
                                     <div className="absolute inset-4 md:inset-6 border-2 border-dashed border-[#D4FF00] rounded-2xl pointer-events-none scan-frame-pulse" />
                                 )}
                                 {/* Capture Buttons - larger for mobile */}
-                                <div className="absolute bottom-4 md:bottom-6 left-0 right-0 flex justify-center gap-6">
+                                <div className="absolute bottom-4 md:bottom-6 left-0 right-0 flex justify-center gap-4">
                                     <button
                                         onClick={stopCamera}
-                                        className={`p-4 md:p-4 rounded-full transition-all active:scale-95 ${isLight ? "bg-white/90" : "bg-[#2a2a2a]/90"}`}
+                                        className={`p-4 rounded-full transition-all active:scale-95 ${isLight ? "bg-white/90" : "bg-[#2a2a2a]/90"}`}
                                     >
-                                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                             <path d="M6 6l12 12M18 6L6 18" strokeLinecap="round" />
                                         </svg>
                                     </button>
                                     <button
                                         onClick={captureFromCamera}
                                         disabled={!isCameraReady}
-                                        className={`p-5 md:p-4 rounded-full transition-all active:scale-95 ${isCameraReady
+                                        className={`p-5 rounded-full transition-all active:scale-95 ${isCameraReady
                                             ? "bg-[#D4FF00] text-black"
                                             : "bg-gray-500 text-gray-300 cursor-not-allowed"
                                             }`}
@@ -486,6 +513,18 @@ export default function ScanLabPage() {
                                         <svg width="32" height="32" viewBox="0 0 28 28" fill="none" stroke="currentColor" strokeWidth="2">
                                             <circle cx="14" cy="14" r="10" />
                                             <circle cx="14" cy="14" r="5" fill="currentColor" />
+                                        </svg>
+                                    </button>
+                                    <button
+                                        onClick={flipCamera}
+                                        disabled={isCameraLoading}
+                                        className={`p-4 rounded-full transition-all active:scale-95 ${isLight ? "bg-white/90" : "bg-[#2a2a2a]/90"}`}
+                                        title={facingMode === "environment" ? "Switch to front camera" : "Switch to back camera"}
+                                    >
+                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                            <path d="M3 7h4l3-4h4l3 4h4a1 1 0 011 1v10a1 1 0 01-1 1H3a1 1 0 01-1-1V8a1 1 0 011-1z" />
+                                            <circle cx="12" cy="13" r="3" />
+                                            <path d="M17 10l2-2m0 0l2 2m-2-2v4" strokeLinecap="round" strokeLinejoin="round" />
                                         </svg>
                                     </button>
                                 </div>

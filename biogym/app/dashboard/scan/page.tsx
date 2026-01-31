@@ -64,6 +64,8 @@ export default function ScanLabPage() {
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [hasCamera, setHasCamera] = useState(false);
     const [isCameraActive, setIsCameraActive] = useState(false);
+    const [isCameraLoading, setIsCameraLoading] = useState(false);
+    const [isCameraReady, setIsCameraReady] = useState(false);
     const [isDragging, setIsDragging] = useState(false);
 
     const videoRef = useRef<HTMLVideoElement>(null);
@@ -93,18 +95,34 @@ export default function ScanLabPage() {
     }, []);
 
     const startCamera = async () => {
+        setIsCameraLoading(true);
+        setIsCameraReady(false);
         try {
+            // Use back camera (environment) for physique capture
             const stream = await navigator.mediaDevices.getUserMedia({
-                video: { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 720 } }
+                video: {
+                    facingMode: { ideal: "environment" },
+                    width: { ideal: 1920, min: 640 },
+                    height: { ideal: 1080, min: 480 }
+                }
             });
             streamRef.current = stream;
             if (videoRef.current) {
                 videoRef.current.srcObject = stream;
-                await videoRef.current.play();
+                // Wait for video to be ready
+                videoRef.current.onloadedmetadata = () => {
+                    videoRef.current?.play().then(() => {
+                        setIsCameraReady(true);
+                        setIsCameraLoading(false);
+                    }).catch(() => {
+                        setIsCameraLoading(false);
+                    });
+                };
             }
             setIsCameraActive(true);
         } catch {
             setHasCamera(false);
+            setIsCameraLoading(false);
             fileInputRef.current?.click();
         }
     };
@@ -115,6 +133,8 @@ export default function ScanLabPage() {
             streamRef.current = null;
         }
         setIsCameraActive(false);
+        setIsCameraReady(false);
+        setIsCameraLoading(false);
     }, []);
 
     const captureFromCamera = () => {
@@ -393,36 +413,53 @@ export default function ScanLabPage() {
                             </div>
                         </div>
                     ) : isCameraActive ? (
-                        /* Camera View */
-                        <div className="absolute inset-0 flex items-center justify-center p-6">
+                        /* Camera View - Fullscreen on mobile */
+                        <div className="absolute inset-0 flex items-center justify-center">
                             <div className="relative w-full h-full">
+                                {/* Loading overlay */}
+                                {(isCameraLoading || !isCameraReady) && (
+                                    <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/80 rounded-2xl">
+                                        <motion.div
+                                            animate={{ rotate: 360 }}
+                                            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                                            className="w-12 h-12 border-3 border-[#D4FF00]/30 border-t-[#D4FF00] rounded-full mb-4"
+                                        />
+                                        <p className="text-white/80 text-sm">Starting camera...</p>
+                                    </div>
+                                )}
                                 <video
                                     ref={videoRef}
                                     autoPlay
                                     playsInline
                                     muted
                                     className="w-full h-full object-cover rounded-2xl"
+                                    style={{ transform: 'scaleX(1)' }}
                                 />
-                                {/* Capture Frame Guide */}
-                                <div className="absolute inset-6 border-2 border-dashed border-[#D4FF00] rounded-3xl pointer-events-none scan-frame-pulse" />
-                                {/* Capture Button */}
-                                <div className="absolute bottom-6 left-0 right-0 flex justify-center gap-4">
+                                {/* Capture Frame Guide - only show when ready */}
+                                {isCameraReady && (
+                                    <div className="absolute inset-4 md:inset-6 border-2 border-dashed border-[#D4FF00] rounded-2xl pointer-events-none scan-frame-pulse" />
+                                )}
+                                {/* Capture Buttons - larger for mobile */}
+                                <div className="absolute bottom-4 md:bottom-6 left-0 right-0 flex justify-center gap-6">
                                     <button
                                         onClick={stopCamera}
-                                        className={`p-4 rounded-full transition-all ${isLight ? "bg-white/90 hover:bg-white" : "bg-[#2a2a2a]/90 hover:bg-[#3a3a3a]"
-                                            }`}
+                                        className={`p-4 md:p-4 rounded-full transition-all active:scale-95 ${isLight ? "bg-white/90" : "bg-[#2a2a2a]/90"}`}
                                     >
-                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                             <path d="M6 6l12 12M18 6L6 18" strokeLinecap="round" />
                                         </svg>
                                     </button>
                                     <button
                                         onClick={captureFromCamera}
-                                        className="p-4 rounded-full bg-[#D4FF00] text-black hover:bg-[#c4ef00] transition-all hover:scale-105 active:scale-95"
+                                        disabled={!isCameraReady}
+                                        className={`p-5 md:p-4 rounded-full transition-all active:scale-95 ${isCameraReady
+                                                ? "bg-[#D4FF00] text-black"
+                                                : "bg-gray-500 text-gray-300 cursor-not-allowed"
+                                            }`}
                                     >
-                                        <svg width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="currentColor" strokeWidth="2">
+                                        <svg width="32" height="32" viewBox="0 0 28 28" fill="none" stroke="currentColor" strokeWidth="2">
                                             <circle cx="14" cy="14" r="10" />
-                                            <circle cx="14" cy="14" r="4" fill="currentColor" />
+                                            <circle cx="14" cy="14" r="5" fill="currentColor" />
                                         </svg>
                                     </button>
                                 </div>

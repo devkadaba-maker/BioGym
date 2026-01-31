@@ -102,27 +102,54 @@ export default function ScanLabPage() {
             const stream = await navigator.mediaDevices.getUserMedia({
                 video: {
                     facingMode: { ideal: "environment" },
-                    width: { ideal: 1920, min: 640 },
-                    height: { ideal: 1080, min: 480 }
+                    width: { ideal: 1280 },
+                    height: { ideal: 720 }
                 }
             });
             streamRef.current = stream;
-            if (videoRef.current) {
-                videoRef.current.srcObject = stream;
-                // Wait for video to be ready
-                videoRef.current.onloadedmetadata = () => {
-                    videoRef.current?.play().then(() => {
-                        setIsCameraReady(true);
-                        setIsCameraLoading(false);
-                    }).catch(() => {
-                        setIsCameraLoading(false);
-                    });
-                };
-            }
             setIsCameraActive(true);
+
+            if (videoRef.current) {
+                const video = videoRef.current;
+                video.srcObject = stream;
+
+                // Function to mark camera as ready
+                const markReady = () => {
+                    setIsCameraReady(true);
+                    setIsCameraLoading(false);
+                };
+
+                // Use canplay event - more reliable than loadedmetadata
+                const handleCanPlay = () => {
+                    video.removeEventListener('canplay', handleCanPlay);
+                    markReady();
+                };
+
+                video.addEventListener('canplay', handleCanPlay);
+
+                // Try to play immediately
+                try {
+                    await video.play();
+                    // If play succeeds and video has dimensions, we're ready
+                    if (video.videoWidth > 0) {
+                        video.removeEventListener('canplay', handleCanPlay);
+                        markReady();
+                    }
+                } catch {
+                    // Autoplay blocked - still wait for canplay
+                }
+
+                // Fallback timeout - if nothing works in 3 seconds, show camera anyway
+                setTimeout(() => {
+                    if (!streamRef.current) return; // Camera was stopped
+                    setIsCameraReady(true);
+                    setIsCameraLoading(false);
+                }, 3000);
+            }
         } catch {
             setHasCamera(false);
             setIsCameraLoading(false);
+            setIsCameraActive(false);
             fileInputRef.current?.click();
         }
     };
@@ -453,8 +480,8 @@ export default function ScanLabPage() {
                                         onClick={captureFromCamera}
                                         disabled={!isCameraReady}
                                         className={`p-5 md:p-4 rounded-full transition-all active:scale-95 ${isCameraReady
-                                                ? "bg-[#D4FF00] text-black"
-                                                : "bg-gray-500 text-gray-300 cursor-not-allowed"
+                                            ? "bg-[#D4FF00] text-black"
+                                            : "bg-gray-500 text-gray-300 cursor-not-allowed"
                                             }`}
                                     >
                                         <svg width="32" height="32" viewBox="0 0 28 28" fill="none" stroke="currentColor" strokeWidth="2">

@@ -32,24 +32,47 @@ export default function Navbar() {
     return (
         <header className="fixed top-0 left-0 right-0 z-50 px-6 py-4 glass">
             <nav className="max-w-7xl mx-auto flex items-center justify-between">
-                {/* Logo */}
-                <Link href="/" className="flex items-center gap-2 text-white">
-                    <svg
-                        width="32"
-                        height="32"
-                        viewBox="0 0 32 32"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                    >
-                        <path
-                            d="M8 12H24M8 20H24M12 8V24M20 8V24"
-                            stroke="#D4FF00"
-                            strokeWidth="2.5"
-                            strokeLinecap="round"
-                        />
-                    </svg>
-                    <span className="text-xl font-bold">BioGym.fit</span>
-                </Link>
+                {/* Mobile Back Button - shown on non-homepage */}
+                <div className="flex items-center gap-3">
+                    {!isLandingPage && (
+                        <Link
+                            href="/"
+                            className="md:hidden p-2 rounded-full hover:bg-white/10 transition-colors active:scale-95"
+                            aria-label="Back to home"
+                        >
+                            <svg
+                                width="20"
+                                height="20"
+                                viewBox="0 0 20 20"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                className="text-white"
+                            >
+                                <path d="M12 4L6 10L12 16" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
+                        </Link>
+                    )}
+
+                    {/* Logo */}
+                    <Link href="/" className="flex items-center gap-2 text-white">
+                        <svg
+                            width="32"
+                            height="32"
+                            viewBox="0 0 32 32"
+                            fill="none"
+                            xmlns="http://www.w3.org/2000/svg"
+                        >
+                            <path
+                                d="M8 12H24M8 20H24M12 8V24M20 8V24"
+                                stroke="#D4FF00"
+                                strokeWidth="2.5"
+                                strokeLinecap="round"
+                            />
+                        </svg>
+                        <span className="text-xl font-bold">BioGym.fit</span>
+                    </Link>
+                </div>
 
                 {/* Nav Links - Dynamic based on page */}
                 <div className="hidden md:flex items-center gap-8">
@@ -205,8 +228,8 @@ export default function Navbar() {
             {isLandingPage && (
                 <div
                     className={`md:hidden fixed top-[72px] left-0 right-0 bg-[#1a1a1a]/95 backdrop-blur-lg border-b border-[#2a2a2a] transition-all duration-300 ease-in-out ${mobileMenuOpen
-                            ? 'opacity-100 translate-y-0 pointer-events-auto'
-                            : 'opacity-0 -translate-y-4 pointer-events-none'
+                        ? 'opacity-100 translate-y-0 pointer-events-auto'
+                        : 'opacity-0 -translate-y-4 pointer-events-none'
                         }`}
                 >
                     <div className="p-4 flex flex-col gap-3">

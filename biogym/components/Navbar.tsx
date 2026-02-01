@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useState } from "react";
 import {
     SignInButton,
     SignedIn,
@@ -11,6 +12,7 @@ import {
 
 export default function Navbar() {
     const pathname = usePathname();
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
     // Hide navbar on auth pages and dashboard (dashboard has its own layout)
     if (
@@ -24,6 +26,8 @@ export default function Navbar() {
     // Determine which nav links to show based on current page
     const isLandingPage = pathname === "/";
     const isDashboard = pathname?.startsWith("/dashboard");
+
+    const toggleMobileMenu = () => setMobileMenuOpen(!mobileMenuOpen);
 
     return (
         <header className="fixed top-0 left-0 right-0 z-50 px-6 py-4 glass">
@@ -173,7 +177,11 @@ export default function Navbar() {
                     </SignedIn>
 
                     {/* Mobile Menu Button */}
-                    <button className="md:hidden text-white p-2">
+                    <button
+                        className="md:hidden text-white p-2 relative z-50"
+                        onClick={toggleMobileMenu}
+                        aria-label="Toggle menu"
+                    >
                         <svg
                             width="24"
                             height="24"
@@ -181,12 +189,76 @@ export default function Navbar() {
                             fill="none"
                             stroke="currentColor"
                             strokeWidth="2"
+                            className="transition-transform duration-300"
                         >
-                            <path d="M3 12H21M3 6H21M3 18H21" />
+                            {mobileMenuOpen ? (
+                                <path d="M6 6L18 18M6 18L18 6" />
+                            ) : (
+                                <path d="M3 12H21M3 6H21M3 18H21" />
+                            )}
                         </svg>
                     </button>
                 </div>
             </nav>
+
+            {/* Mobile Dropdown Menu */}
+            {isLandingPage && (
+                <div
+                    className={`md:hidden fixed top-[72px] left-0 right-0 bg-[#1a1a1a]/95 backdrop-blur-lg border-b border-[#2a2a2a] transition-all duration-300 ease-in-out ${mobileMenuOpen
+                            ? 'opacity-100 translate-y-0 pointer-events-auto'
+                            : 'opacity-0 -translate-y-4 pointer-events-none'
+                        }`}
+                >
+                    <div className="p-4 flex flex-col gap-3">
+                        <Link
+                            href="#features"
+                            className="text-gray-300 hover:text-white transition-colors text-sm py-2 px-3 rounded-lg hover:bg-white/5"
+                            onClick={() => setMobileMenuOpen(false)}
+                        >
+                            Product
+                        </Link>
+                        <Link
+                            href="/pricing"
+                            className="text-gray-300 hover:text-white transition-colors text-sm py-2 px-3 rounded-lg hover:bg-white/5"
+                            onClick={() => setMobileMenuOpen(false)}
+                        >
+                            Pricing
+                        </Link>
+                        <Link
+                            href="#contact"
+                            className="text-gray-300 hover:text-white transition-colors text-sm py-2 px-3 rounded-lg hover:bg-white/5"
+                            onClick={() => setMobileMenuOpen(false)}
+                        >
+                            Contact
+                        </Link>
+
+                        <div className="h-px bg-[#2a2a2a] my-2" />
+
+                        <SignedOut>
+                            <SignInButton mode="modal">
+                                <button className="btn-secondary-mobile w-full text-sm py-2.5">Sign in</button>
+                            </SignInButton>
+                            <Link
+                                href="/sign-up"
+                                className="btn-primary-mobile w-full text-sm py-2.5 text-center"
+                                onClick={() => setMobileMenuOpen(false)}
+                            >
+                                Get Started
+                            </Link>
+                        </SignedOut>
+
+                        <SignedIn>
+                            <Link
+                                href="/dashboard"
+                                className="btn-primary-mobile w-full text-sm py-2.5 text-center"
+                                onClick={() => setMobileMenuOpen(false)}
+                            >
+                                Dashboard
+                            </Link>
+                        </SignedIn>
+                    </div>
+                </div>
+            )}
         </header>
     );
 }

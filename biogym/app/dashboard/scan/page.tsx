@@ -819,9 +819,9 @@ export default function ScanLabPage() {
                                         {hasCamera && (
                                             <button
                                                 onClick={startCamera}
-                                                className="px-5 py-2.5 bg-[#D4FF00] text-black rounded-xl font-medium hover:bg-[#c4ef00] transition-all hover:scale-105 active:scale-95 flex items-center gap-2"
+                                                className="px-4 py-2 sm:px-5 sm:py-2.5 bg-[#D4FF00] text-black rounded-xl font-medium text-sm sm:text-base hover:bg-[#c4ef00] transition-all hover:scale-105 active:scale-95 flex items-center gap-1.5 sm:gap-2"
                                             >
-                                                <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="2">
+                                                <svg width="16" height="16" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="2" className="sm:w-[18px] sm:h-[18px]">
                                                     <rect x="2" y="4" width="14" height="10" rx="2" />
                                                     <circle cx="9" cy="9" r="3" />
                                                 </svg>
@@ -830,14 +830,14 @@ export default function ScanLabPage() {
                                         )}
                                         <button
                                             onClick={() => fileInputRef.current?.click()}
-                                            className={`px-5 py-2.5 rounded-xl font-medium transition-all hover:scale-105 active:scale-95 flex items-center gap-2 ${hasCamera
+                                            className={`px-4 py-2 sm:px-5 sm:py-2.5 rounded-xl font-medium text-sm sm:text-base transition-all hover:scale-105 active:scale-95 flex items-center gap-1.5 sm:gap-2 ${hasCamera
                                                 ? isLight
                                                     ? "bg-gray-200 text-gray-700 hover:bg-gray-300"
                                                     : "bg-[#2a2a2a] text-gray-300 hover:bg-[#3a3a3a]"
                                                 : "bg-[#D4FF00] text-black hover:bg-[#c4ef00]"
                                                 }`}
                                         >
-                                            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="2">
+                                            <svg width="16" height="16" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="2" className="sm:w-[18px] sm:h-[18px]">
                                                 <path d="M9 3v9M5 8l4 4 4-4" strokeLinecap="round" strokeLinejoin="round" />
                                                 <path d="M3 14h12" strokeLinecap="round" />
                                             </svg>
@@ -875,7 +875,6 @@ export default function ScanLabPage() {
                 </p>
             </motion.div>
 
-            {/* Action Button */}
             <motion.button
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -883,7 +882,7 @@ export default function ScanLabPage() {
                 onClick={handleNext}
                 disabled={(step.id !== "profile" && !hasCurrentImage) || isAnalyzing}
                 className={`
-                    w-full mt-4 py-4 rounded-2xl font-semibold text-base transition-all duration-300
+                    w-full mt-4 py-3 sm:py-4 rounded-2xl font-semibold text-sm sm:text-base transition-all duration-300
                     flex items-center justify-center gap-2
                     ${(step.id === "profile" || hasCurrentImage) && !isAnalyzing
                         ? "bg-[#4a5568] text-white hover:bg-[#5a6578] cursor-pointer scan-button-glow"

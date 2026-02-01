@@ -7,7 +7,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import { toast } from "sonner";
 import { useUser } from "@clerk/nextjs";
-import { saveExerciseLog } from "@/lib/firestore";
 import PremiumGate from "@/components/PremiumGate";
 
 interface Exercise {
@@ -341,8 +340,16 @@ export default function TrainingLabPage() {
             };
 
             try {
-                await saveExerciseLog(user.id, exerciseData);
-                toast.success("Exercise logged!");
+                const response = await fetch('/api/workouts', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ exercise: exerciseData })
+                });
+                if (response.ok) {
+                    toast.success("Exercise logged!");
+                } else {
+                    throw new Error('Failed to save');
+                }
             } catch (error) {
                 console.error("Failed to save exercise log:", error);
                 toast.error("Failed to save progress");

@@ -55,6 +55,13 @@ const CAPTURE_STEPS: CaptureStep[] = [
         instruction: "Position right leg fully extended in frame. Show quad and calf clearly.",
         requiredPhotos: 1,
     },
+    {
+        id: "profile",
+        title: "Your Profile",
+        subtitle: "Optional Details",
+        instruction: "Add optional details to enhance your analysis. All fields are optional.",
+        requiredPhotos: 0,
+    },
 ];
 
 export default function ScanLabPage() {
@@ -73,6 +80,15 @@ export default function ScanLabPage() {
     const [isCameraReady, setIsCameraReady] = useState(false);
     const [isDragging, setIsDragging] = useState(false);
     const [facingMode, setFacingMode] = useState<"environment" | "user">("environment");
+    const [userProfile, setUserProfile] = useState({
+        gender: '',
+        diet: '',
+        trainingPlan: '',
+        height: '',
+        weight: '',
+        heightUnit: 'cm',
+        weightUnit: 'kg'
+    });
 
     const videoRef = useRef<HTMLVideoElement>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -357,6 +373,13 @@ export default function ScanLabPage() {
                 throw new Error("No images captured");
             }
 
+            // Add user profile data if any fields are filled
+            const hasProfileData = Object.values(userProfile).some(v => v !== '' && v !== 'cm' && v !== 'kg');
+            if (hasProfileData) {
+                formData.append('userProfile', JSON.stringify(userProfile));
+                console.log("User profile added:", userProfile);
+            }
+
             console.log(`Sending ${imageCount} images for analysis`);
             console.log("=== FETCH START ===");
 
@@ -509,8 +532,131 @@ export default function ScanLabPage() {
                         </motion.div>
                     )}
 
-                    {/* Captured Image Preview */}
-                    {hasCurrentImage ? (
+                    {/* Profile Input Form (Step 6) */}
+                    {step.id === "profile" ? (
+                        <div className="absolute inset-0 flex items-start justify-center p-4 pt-6 overflow-y-auto overflow-x-hidden">
+                            <div className="w-full max-w-md space-y-4">
+                                {/* Gender Select */}
+                                <div>
+                                    <label className={`block text-sm font-medium mb-1.5 ${isLight ? "text-gray-700" : "text-gray-300"}`}>
+                                        Gender
+                                    </label>
+                                    <select
+                                        value={userProfile.gender}
+                                        onChange={(e) => setUserProfile(prev => ({ ...prev, gender: e.target.value }))}
+                                        className={`w-full px-4 py-3 rounded-xl border transition-all focus:outline-none focus:ring-2 focus:ring-[#D4FF00]/50 ${isLight
+                                            ? "bg-white border-gray-200 text-gray-900"
+                                            : "bg-[#252525] border-[#3a3a3a] text-white"
+                                            }`}
+                                    >
+                                        <option value="">Select (optional)</option>
+                                        <option value="male">Male</option>
+                                        <option value="female">Female</option>
+                                        <option value="other">Other</option>
+                                    </select>
+                                </div>
+
+                                {/* Height & Weight Row */}
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label className={`block text-sm font-medium mb-1.5 ${isLight ? "text-gray-700" : "text-gray-300"}`}>
+                                            Height
+                                        </label>
+                                        <div className="flex gap-2">
+                                            <input
+                                                type="number"
+                                                placeholder="e.g. 180"
+                                                value={userProfile.height}
+                                                onChange={(e) => setUserProfile(prev => ({ ...prev, height: e.target.value }))}
+                                                className={`flex-1 px-3 py-3 rounded-xl border transition-all focus:outline-none focus:ring-2 focus:ring-[#D4FF00]/50 ${isLight
+                                                    ? "bg-white border-gray-200 text-gray-900"
+                                                    : "bg-[#252525] border-[#3a3a3a] text-white"
+                                                    }`}
+                                            />
+                                            <select
+                                                value={userProfile.heightUnit}
+                                                onChange={(e) => setUserProfile(prev => ({ ...prev, heightUnit: e.target.value }))}
+                                                className={`w-16 px-2 py-3 rounded-xl border transition-all focus:outline-none ${isLight
+                                                    ? "bg-white border-gray-200 text-gray-900"
+                                                    : "bg-[#252525] border-[#3a3a3a] text-white"
+                                                    }`}
+                                            >
+                                                <option value="cm">cm</option>
+                                                <option value="ft">ft</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className={`block text-sm font-medium mb-1.5 ${isLight ? "text-gray-700" : "text-gray-300"}`}>
+                                            Weight
+                                        </label>
+                                        <div className="flex gap-2">
+                                            <input
+                                                type="number"
+                                                placeholder="e.g. 80"
+                                                value={userProfile.weight}
+                                                onChange={(e) => setUserProfile(prev => ({ ...prev, weight: e.target.value }))}
+                                                className={`flex-1 px-3 py-3 rounded-xl border transition-all focus:outline-none focus:ring-2 focus:ring-[#D4FF00]/50 ${isLight
+                                                    ? "bg-white border-gray-200 text-gray-900"
+                                                    : "bg-[#252525] border-[#3a3a3a] text-white"
+                                                    }`}
+                                            />
+                                            <select
+                                                value={userProfile.weightUnit}
+                                                onChange={(e) => setUserProfile(prev => ({ ...prev, weightUnit: e.target.value }))}
+                                                className={`w-16 px-2 py-3 rounded-xl border transition-all focus:outline-none ${isLight
+                                                    ? "bg-white border-gray-200 text-gray-900"
+                                                    : "bg-[#252525] border-[#3a3a3a] text-white"
+                                                    }`}
+                                            >
+                                                <option value="kg">kg</option>
+                                                <option value="lbs">lbs</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Diet */}
+                                <div>
+                                    <label className={`block text-sm font-medium mb-1.5 ${isLight ? "text-gray-700" : "text-gray-300"}`}>
+                                        Current Diet
+                                    </label>
+                                    <textarea
+                                        placeholder="e.g. High protein, low carb, 2500 cal/day..."
+                                        value={userProfile.diet}
+                                        onChange={(e) => setUserProfile(prev => ({ ...prev, diet: e.target.value }))}
+                                        rows={2}
+                                        className={`w-full px-4 py-3 rounded-xl border transition-all focus:outline-none focus:ring-2 focus:ring-[#D4FF00]/50 resize-none ${isLight
+                                            ? "bg-white border-gray-200 text-gray-900 placeholder:text-gray-400"
+                                            : "bg-[#252525] border-[#3a3a3a] text-white placeholder:text-gray-500"
+                                            }`}
+                                    />
+                                </div>
+
+                                {/* Training Plan */}
+                                <div>
+                                    <label className={`block text-sm font-medium mb-1.5 ${isLight ? "text-gray-700" : "text-gray-300"}`}>
+                                        Training Plan
+                                    </label>
+                                    <textarea
+                                        placeholder="e.g. Push/Pull/Legs 6x per week, focusing on hypertrophy..."
+                                        value={userProfile.trainingPlan}
+                                        onChange={(e) => setUserProfile(prev => ({ ...prev, trainingPlan: e.target.value }))}
+                                        rows={2}
+                                        className={`w-full px-4 py-3 rounded-xl border transition-all focus:outline-none focus:ring-2 focus:ring-[#D4FF00]/50 resize-none ${isLight
+                                            ? "bg-white border-gray-200 text-gray-900 placeholder:text-gray-400"
+                                            : "bg-[#252525] border-[#3a3a3a] text-white placeholder:text-gray-500"
+                                            }`}
+                                    />
+                                </div>
+
+                                {/* Helper text */}
+                                <p className={`text-xs text-center ${isLight ? "text-gray-500" : "text-gray-500"}`}>
+                                    All fields are optional. They help personalize your analysis.
+                                </p>
+                            </div>
+                        </div>
+                    ) : hasCurrentImage ? (
                         <div className="absolute inset-0 flex items-center justify-center p-6">
                             <div className="relative w-full h-full">
                                 <img
@@ -735,11 +881,11 @@ export default function ScanLabPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4 }}
                 onClick={handleNext}
-                disabled={!hasCurrentImage || isAnalyzing}
+                disabled={(step.id !== "profile" && !hasCurrentImage) || isAnalyzing}
                 className={`
                     w-full mt-4 py-4 rounded-2xl font-semibold text-base transition-all duration-300
                     flex items-center justify-center gap-2
-                    ${hasCurrentImage && !isAnalyzing
+                    ${(step.id === "profile" || hasCurrentImage) && !isAnalyzing
                         ? "bg-[#4a5568] text-white hover:bg-[#5a6578] cursor-pointer scan-button-glow"
                         : isLight
                             ? "bg-gray-200 text-gray-400 cursor-not-allowed"

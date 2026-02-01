@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { stripe } from '@/lib/stripe';
 import { auth } from '@clerk/nextjs/server';
-import { getSubscription } from '@/lib/firestore';
+import { getSubscription } from '@/lib/firestore-admin';
 
 export async function POST(request: NextRequest) {
     try {

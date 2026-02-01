@@ -3,7 +3,7 @@ import { GeminiMasterSystemPrompt } from "@/lib/gemini";
 import { NextRequest, NextResponse } from "next/server";
 import { extractJson } from "@/lib/gemini";
 import { auth } from "@clerk/nextjs/server";
-import { saveScanResult, incrementScanCount } from "@/lib/firestore";
+import { saveScanResult, incrementScanCount } from "@/lib/firestore-admin";
 
 const genAi = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
@@ -75,6 +75,28 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'No images provided' }, { status: 400 });
         }
 
+        // Parse optional user profile data
+        const userProfileRaw = formData.get('userProfile') as string | null;
+        let userContextSection = '';
+        if (userProfileRaw) {
+            try {
+                const profile = JSON.parse(userProfileRaw);
+                console.log("[SCAN API] 📋 User profile received:", profile);
+                const contextLines = [];
+                if (profile.gender) contextLines.push(`Gender: ${profile.gender}`);
+                if (profile.height) contextLines.push(`Height: ${profile.height} ${profile.heightUnit || 'cm'}`);
+                if (profile.weight) contextLines.push(`Weight: ${profile.weight} ${profile.weightUnit || 'kg'}`);
+                if (profile.diet) contextLines.push(`Diet: ${profile.diet}`);
+                if (profile.trainingPlan) contextLines.push(`Training Plan: ${profile.trainingPlan}`);
+
+                if (contextLines.length > 0) {
+                    userContextSection = `\n\nUSER CONTEXT (use this to improve and personalize your analysis):\n${contextLines.map(l => `- ${l}`).join('\n')}`;
+                }
+            } catch (e) {
+                console.warn("[SCAN API] Failed to parse userProfile:", e);
+            }
+        }
+
         console.log(`[SCAN API] 📤 Sending ${imageDescriptions.length} images to Gemini: [${imageDescriptions.join(', ')}]`);
 
         const model = genAi.getGenerativeModel({
@@ -95,6 +117,7 @@ CRITICAL INSTRUCTIONS:
 7. Provide accurate, region-specific analysis based on what you can ACTUALLY SEE in each image
 8. Do NOT copy the same analysis text across different body parts
 9. IMPORTANT: If the user is wearing clothing (e.g., t-shirt, shorts), do your best to infer muscle structure and body composition from the visible shape, fit of the clothing, and any exposed skin. Do NOT refuse to analyze because of clothing.
+${userContextSection}
 
 Analyze these images with precision. Provide density scores, hotspots with coordinates, exercise recommendations, and detailed analysis for each body region. Respond with valid JSON only.`;
 

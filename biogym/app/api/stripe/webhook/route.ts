@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { stripe } from '@/lib/stripe';
-import { saveSubscription } from '@/lib/firestore';
+import { saveSubscription } from '@/lib/firestore-admin';
+import { sendTrialNotification } from '@/lib/email';
 import Stripe from 'stripe';
 
 // Stripe requires raw body for webhook verification
@@ -52,8 +53,10 @@ export async function POST(request: NextRequest) {
                         metadata?: { clerkUserId?: string };
                     };
 
+                    const status = subData.status === 'trialing' ? 'trialing' : 'active';
+
                     await saveSubscription(clerkUserId, {
-                        status: subData.status === 'trialing' ? 'trialing' : 'active',
+                        status,
                         stripeCustomerId: session.customer as string,
                         stripeSubscriptionId: subData.id,
                         currentPeriodEnd: new Date(subData.current_period_end * 1000),
@@ -62,6 +65,12 @@ export async function POST(request: NextRequest) {
                             ? new Date(subData.trial_end * 1000)
                             : undefined,
                     });
+
+                    // Send notification if it's a trial
+                    if (status === 'trialing') {
+                        const userEmail = session.customer_details?.email || undefined;
+                        await sendTrialNotification(userEmail, clerkUserId);
+                    }
 
                     console.log(`✅ Subscription activated for user ${clerkUserId}`);
                 }

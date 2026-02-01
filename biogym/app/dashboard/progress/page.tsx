@@ -17,19 +17,90 @@ import {
     Filler,
 } from "chart.js";
 import { Line, Doughnut } from "react-chartjs-2";
-import {
-    getScanHistory,
-    calculateStreak,
-    getAverageDensities,
-    scanHistoryToCSV,
-    downloadCSV,
-    getExerciseLogs,
-    ScanRecord,
-    StreakData,
-    AverageDensities,
-    ExerciseLog
-} from "@/lib/firestore";
 import PremiumGate from "@/components/PremiumGate";
+
+// Type definitions (previously from firestore)
+interface ScanAnalysis {
+    chest_density: number;
+    arms_density: number;
+    legs_density: number;
+    core_density: number;
+    primary_weakness?: string;
+}
+
+interface ScanRecommendation {
+    protocol_name: string;
+    focus_area: string;
+    exercises: Array<{ name: string; reps: string; sets: string }>;
+}
+
+interface ScanRecord {
+    id?: string;
+    userId: string;
+    timestamp: Date;
+    analysis: ScanAnalysis;
+    recommendation?: ScanRecommendation;
+}
+
+interface StreakData {
+    current: number;
+    best: number;
+    lastScanDate: Date | null;
+}
+
+interface AverageDensities {
+    chest: number;
+    arms: number;
+    legs: number;
+    core: number;
+    overall: number;
+}
+
+interface ExerciseLog {
+    id?: string;
+    userId: string;
+    timestamp: Date;
+    exerciseName: string;
+    sets: string;
+    reps: string;
+    time?: string;
+    actualDuration?: number;
+    focus: string;
+    difficulty?: string;
+    workoutId?: string;
+}
+
+// CSV utilities (client-side)
+function scanHistoryToCSV(scans: ScanRecord[]): string {
+    const headers = ['Date', 'Time', 'Chest', 'Arms', 'Legs', 'Core', 'Overall', 'Weakness', 'Protocol'];
+    const rows = scans.map((scan) => {
+        const overall = ((scan.analysis.chest_density + scan.analysis.arms_density +
+            scan.analysis.legs_density + scan.analysis.core_density) / 4).toFixed(1);
+        return [
+            scan.timestamp.toLocaleDateString(),
+            scan.timestamp.toLocaleTimeString(),
+            scan.analysis.chest_density.toFixed(1),
+            scan.analysis.arms_density.toFixed(1),
+            scan.analysis.legs_density.toFixed(1),
+            scan.analysis.core_density.toFixed(1),
+            overall,
+            scan.analysis.primary_weakness || '',
+            scan.recommendation?.protocol_name || '',
+        ];
+    });
+    return [headers.join(','), ...rows.map((row) => row.map((cell) => `"${cell}"`).join(','))].join('\n');
+}
+
+function downloadCSV(filename: string, csvContent: string): void {
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.setAttribute('href', URL.createObjectURL(blob));
+    link.setAttribute('download', filename);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
 
 // Register Chart.js components
 ChartJS.register(
@@ -67,23 +138,38 @@ export default function ProgressPage() {
     const [averages, setAverages] = useState<AverageDensities>({ chest: 0, arms: 0, legs: 0, core: 0, overall: 0 });
     const [selectedScan, setSelectedScan] = useState<ScanRecord | null>(null);
 
-    // Load data from Firestore
+    // Load data from API
     const loadData = useCallback(async () => {
         if (!user?.id) return;
 
         setIsLoading(true);
         try {
-            const [scanHistory, streakData, avgData, workoutHistory] = await Promise.all([
-                getScanHistory(user.id, 100),
-                calculateStreak(user.id),
-                getAverageDensities(user.id),
-                getExerciseLogs(user.id, 50)
+            // Fetch all data via API
+            const [progressRes, workoutsRes] = await Promise.all([
+                fetch('/api/scans?action=progress'),
+                fetch('/api/workouts')
             ]);
 
-            setScans(scanHistory);
-            setStreak(streakData);
-            setAverages(avgData);
-            setWorkouts(workoutHistory);
+            if (progressRes.ok) {
+                const progressData = await progressRes.json();
+                // Convert timestamp strings back to Date objects
+                const parsedScans = (progressData.scans || []).map((scan: any) => ({
+                    ...scan,
+                    timestamp: new Date(scan.timestamp)
+                }));
+                setScans(parsedScans);
+                setStreak(progressData.streak || { current: 0, best: 0, lastScanDate: null });
+                setAverages(progressData.averages || { chest: 0, arms: 0, legs: 0, core: 0, overall: 0 });
+            }
+
+            if (workoutsRes.ok) {
+                const workoutsData = await workoutsRes.json();
+                const parsedWorkouts = (workoutsData.logs || []).map((w: any) => ({
+                    ...w,
+                    timestamp: new Date(w.timestamp)
+                }));
+                setWorkouts(parsedWorkouts);
+            }
         } catch (error) {
             console.error("Error loading progress data:", error);
         } finally {

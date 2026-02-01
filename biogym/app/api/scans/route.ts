@@ -2,9 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { getScanHistory, getLatestScan, calculateStreak, getAverageDensities } from '@/lib/firestore-admin';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: NextRequest) {
     try {
         const { userId } = await auth();
+        console.log('[SCANS API] User ID:', userId);
+
         if (!userId) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
@@ -32,12 +36,14 @@ export async function GET(request: NextRequest) {
             }
             case 'progress': {
                 // Combined data for progress page
+                console.log('[SCANS API] Fetching progress for user:', userId);
                 const [scans, streak, averages] = await Promise.all([
                     getScanHistory(userId, 50),
                     calculateStreak(userId),
                     getAverageDensities(userId),
                 ]);
-                return NextResponse.json({ scans, streak, averages });
+                console.log('[SCANS API] Found', scans.length, 'scans for user', userId);
+                return NextResponse.json({ scans, streak, averages, _debug: { userId, scanCount: scans.length } });
             }
             default:
                 return NextResponse.json({ error: 'Invalid action' }, { status: 400 });

@@ -5,6 +5,8 @@ import { Toaster } from 'sonner'
 import './globals.css'
 import Navbar from '@/components/Navbar'
 import { ThemeProvider } from '@/context/ThemeContext'
+import { SubscriptionProvider } from '@/context/SubscriptionContext'
+import SessionGuard from '@/components/SessionGuard'
 
 const inter = Inter({
   variable: '--font-inter',
@@ -41,9 +43,13 @@ export default function RootLayout({
       <html lang="en" className="dark">
         <body className={`${inter.variable} ${geistMono.variable} antialiased`}>
           <ThemeProvider>
-            <Navbar />
-            {children}
-            <Toaster position="top-center" richColors />
+            <SubscriptionProvider>
+              <SessionGuard>
+                <Navbar />
+                {children}
+                <Toaster position="top-center" richColors />
+              </SessionGuard>
+            </SubscriptionProvider>
           </ThemeProvider>
         </body>
       </html>

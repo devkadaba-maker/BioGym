@@ -50,13 +50,19 @@ export default function Navbar() {
                 {/* Nav Links - Dynamic based on page */}
                 <div className="hidden md:flex items-center gap-8">
                     {isLandingPage ? (
-                        // Landing page: Product & Contact anchor links
+                        // Landing page: Product, Pricing & Contact anchor links
                         <>
                             <Link
                                 href="#features"
                                 className="text-gray-300 hover:text-white transition-colors text-sm"
                             >
                                 Product
+                            </Link>
+                            <Link
+                                href="/pricing"
+                                className="text-gray-300 hover:text-white transition-colors text-sm"
+                            >
+                                Pricing
                             </Link>
                             <Link
                                 href="#contact"

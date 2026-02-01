@@ -3,7 +3,7 @@ import { GeminiMasterSystemPrompt } from "@/lib/gemini";
 import { NextRequest, NextResponse } from "next/server";
 import { extractJson } from "@/lib/gemini";
 import { auth } from "@clerk/nextjs/server";
-import { saveScanResult } from "@/lib/firestore";
+import { saveScanResult, incrementScanCount } from "@/lib/firestore";
 
 const genAi = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
@@ -150,6 +150,14 @@ Analyze these images with precision. Provide density scores, hotspots with coord
                     console.log(`[FIRESTORE] Save time: ${saveElapsedTime}ms`);
                     // Add scanId to response for reference
                     parsedData.scanId = scanId;
+
+                    // Increment scan count for usage tracking
+                    try {
+                        const newCount = await incrementScanCount(userId);
+                        console.log(`[FIRESTORE] 📊 User scan count for this month: ${newCount}`);
+                    } catch (countError) {
+                        console.error("[FIRESTORE] ⚠️ Failed to increment scan count (non-fatal):", countError);
+                    }
                 } else {
                     console.log("[FIRESTORE] ⚠️ Skipping save - conditions not met:");
                     console.log("  - userId exists:", !!userId);

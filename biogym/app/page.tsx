@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import CTAButtons from "@/components/CTAButtons";
+import ContactForm from "@/components/ContactForm";
 
 export default function Home() {
   return (
@@ -288,7 +289,7 @@ export default function Home() {
               {
                 step: "02",
                 title: "Analyze",
-                description: "Our Gemini-powered Vision Engine performs a complete anatomical scan in under 2 seconds.",
+                description: "Our Gemini-powered Vision Engine performs a complete anatomical scan in under 15 seconds.",
                 icon: (
                   <svg width="32" height="32" viewBox="0 0 32 32" fill="none" stroke="#D4FF00" strokeWidth="2">
                     <circle cx="16" cy="16" r="12" />
@@ -359,18 +360,6 @@ export default function Home() {
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 rounded-2xl bg-[#D4FF00]/10 flex items-center justify-center">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#D4FF00" strokeWidth="2">
-                      <path d="M4 4H20C21.1 4 22 4.9 22 6V18C22 19.1 21.1 20 20 20H4C2.9 20 2 19.1 2 18V6C2 4.9 2.9 4 4 4Z" />
-                      <path d="M22 6L12 13L2 6" />
-                    </svg>
-                  </div>
-                  <div>
-                    <div className="text-sm text-gray-400">Email</div>
-                    <div className="text-white">hello@biogym.ai</div>
-                  </div>
-                </div>
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-2xl bg-[#D4FF00]/10 flex items-center justify-center">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#D4FF00" strokeWidth="2">
                       <path d="M21 10C21 17 12 23 12 23C12 23 3 17 3 10C3 5.02944 7.02944 1 12 1C16.9706 1 21 5.02944 21 10Z" />
                       <circle cx="12" cy="10" r="3" />
                     </svg>
@@ -384,40 +373,7 @@ export default function Home() {
             </div>
 
             {/* Contact Form */}
-            <div className="feature-card p-8">
-              <form className="space-y-6">
-                <div>
-                  <label className="block text-sm text-gray-400 mb-2">Name</label>
-                  <input
-                    type="text"
-                    className="w-full px-4 py-3 bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl text-white focus:outline-none focus:border-[#D4FF00] transition-colors"
-                    placeholder="Your name"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm text-gray-400 mb-2">Email</label>
-                  <input
-                    type="email"
-                    className="w-full px-4 py-3 bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl text-white focus:outline-none focus:border-[#D4FF00] transition-colors"
-                    placeholder="your@email.com"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm text-gray-400 mb-2">Message</label>
-                  <textarea
-                    rows={4}
-                    className="w-full px-4 py-3 bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl text-white focus:outline-none focus:border-[#D4FF00] transition-colors resize-none"
-                    placeholder="How can we help?"
-                  />
-                </div>
-                <button type="submit" className="btn-primary w-full justify-center">
-                  Send Message
-                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                    <path d="M5 10H15M15 10L10 5M15 10L10 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </button>
-              </form>
-            </div>
+            <ContactForm />
           </div>
         </div>
       </section>

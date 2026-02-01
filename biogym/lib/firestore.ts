@@ -86,6 +86,21 @@ export interface ExerciseLog {
     workoutId?: string;
 }
 
+// Subscription Types
+export interface UserSubscription {
+    status: 'free' | 'active' | 'canceled' | 'past_due' | 'trialing';
+    stripeCustomerId?: string;
+    stripeSubscriptionId?: string;
+    currentPeriodEnd?: Date;
+    cancelAtPeriodEnd?: boolean;
+    trialEnd?: Date;
+}
+
+export interface MonthlyUsage {
+    scanCount: number;
+    monthYear: string; // Format: "2024-02"
+}
+
 /**
  * Save a scan result to Firestore under the user's collection
  */
@@ -463,4 +478,153 @@ export function downloadCSV(filename: string, csvContent: string): void {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+}
+
+// ============================================
+// SUBSCRIPTION MANAGEMENT FUNCTIONS
+// ============================================
+
+/**
+ * Save or update user subscription data
+ */
+export async function saveSubscription(
+    userId: string,
+    subscriptionData: Partial<UserSubscription>
+): Promise<void> {
+    const { setDoc } = await import('firebase/firestore');
+    const userRef = doc(db, 'users', userId);
+
+    // Convert Date objects to Timestamps
+    const dataToSave: Record<string, unknown> = {
+        ...subscriptionData,
+        updatedAt: Timestamp.now(),
+    };
+
+    if (subscriptionData.currentPeriodEnd) {
+        dataToSave.currentPeriodEnd = Timestamp.fromDate(subscriptionData.currentPeriodEnd);
+    }
+    if (subscriptionData.trialEnd) {
+        dataToSave.trialEnd = Timestamp.fromDate(subscriptionData.trialEnd);
+    }
+
+    await setDoc(userRef, { subscription: dataToSave }, { merge: true });
+}
+
+/**
+ * Get user subscription status
+ * If user doesn't exist in Firestore, create them with 'free' status
+ */
+export async function getSubscription(userId: string): Promise<UserSubscription> {
+    const { setDoc } = await import('firebase/firestore');
+    const userRef = doc(db, 'users', userId);
+    const snapshot = await getDoc(userRef);
+
+    if (!snapshot.exists()) {
+        // Create new user document with free status
+        console.log(`[Firestore] Creating new user document for: ${userId}`);
+        const newUserData = {
+            createdAt: Timestamp.now(),
+            subscription: {
+                status: 'free',
+            }
+        };
+        await setDoc(userRef, newUserData);
+        return { status: 'free' };
+    }
+
+    const data = snapshot.data();
+    const sub = data?.subscription;
+
+    if (!sub) {
+        return { status: 'free' };
+    }
+
+    return {
+        status: sub.status || 'free',
+        stripeCustomerId: sub.stripeCustomerId,
+        stripeSubscriptionId: sub.stripeSubscriptionId,
+        currentPeriodEnd: sub.currentPeriodEnd?.toDate?.() || undefined,
+        cancelAtPeriodEnd: sub.cancelAtPeriodEnd,
+        trialEnd: sub.trialEnd?.toDate?.() || undefined,
+    };
+}
+
+/**
+ * Get current month's usage for a user
+ */
+export async function getMonthlyUsage(userId: string): Promise<MonthlyUsage> {
+    const now = new Date();
+    const monthYear = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+
+    const usageRef = doc(db, 'users', userId, 'usage', monthYear);
+    const snapshot = await getDoc(usageRef);
+
+    if (!snapshot.exists()) {
+        return { scanCount: 0, monthYear };
+    }
+
+    const data = snapshot.data();
+    return {
+        scanCount: data?.scanCount || 0,
+        monthYear,
+    };
+}
+
+/**
+ * Increment scan count for the current month
+ */
+export async function incrementScanCount(userId: string): Promise<number> {
+    const { setDoc, increment } = await import('firebase/firestore');
+
+    const now = new Date();
+    const monthYear = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+
+    const usageRef = doc(db, 'users', userId, 'usage', monthYear);
+
+    await setDoc(usageRef, {
+        scanCount: increment(1),
+        monthYear,
+        updatedAt: Timestamp.now(),
+    }, { merge: true });
+
+    // Return the new count
+    const snapshot = await getDoc(usageRef);
+    return snapshot.data()?.scanCount || 1;
+}
+
+/**
+ * Check if a user can perform a scan
+ * Free users: 1 scan per month
+ * Premium users: unlimited
+ */
+export async function canUserScan(userId: string): Promise<{
+    canScan: boolean;
+    scansRemaining: number;
+    isPremium: boolean;
+    reason?: string;
+}> {
+    const FREE_SCAN_LIMIT = 1;
+
+    const subscription = await getSubscription(userId);
+    const isPremium = subscription.status === 'active' || subscription.status === 'trialing';
+
+    if (isPremium) {
+        return {
+            canScan: true,
+            scansRemaining: -1, // Unlimited
+            isPremium: true,
+        };
+    }
+
+    const usage = await getMonthlyUsage(userId);
+    const scansRemaining = Math.max(0, FREE_SCAN_LIMIT - usage.scanCount);
+
+    return {
+        canScan: scansRemaining > 0,
+        scansRemaining,
+        isPremium: false,
+        reason: scansRemaining === 0
+            ? 'You\'ve used your free scan this month. Upgrade to Pro for unlimited scans!'
+            : undefined,
+    };
 }

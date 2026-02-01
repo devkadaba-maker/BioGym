@@ -3,8 +3,11 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useTheme } from "@/context/ThemeContext";
+import { useSubscription } from "@/context/SubscriptionContext";
+import { useUser } from "@clerk/nextjs";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
+import ScanLimitBlock from "@/components/ScanLimitBlock";
 
 interface CaptureStep {
     id: string;
@@ -56,8 +59,10 @@ const CAPTURE_STEPS: CaptureStep[] = [
 
 export default function ScanLabPage() {
     const { theme } = useTheme();
+    const { user } = useUser();
     const isLight = theme === "light";
     const router = useRouter();
+    const { canScan, isPremium, isLoading: isSubLoading, scansRemaining } = useSubscription();
 
     const [currentStep, setCurrentStep] = useState(0);
     const [capturedImages, setCapturedImages] = useState<Record<string, string>>({});
@@ -78,6 +83,7 @@ export default function ScanLabPage() {
     const totalSteps = CAPTURE_STEPS.length;
     const progress = ((currentStep + 1) / totalSteps) * 100;
     const hasCurrentImage = Boolean(capturedImages[step.id]);
+
 
     // Check for camera availability
     useEffect(() => {
@@ -332,6 +338,10 @@ export default function ScanLabPage() {
             sessionStorage.setItem("scanlab-result", JSON.stringify(result));
             sessionStorage.setItem("scanlab-images", JSON.stringify(capturedImages));
             sessionStorage.setItem("isScanned", "true");
+            // Store user ID for data isolation validation
+            if (user?.id) {
+                sessionStorage.setItem("biogym-session-user", user.id);
+            }
 
             toast.dismiss(toastId);
             toast.success("Analysis complete!");
@@ -368,6 +378,11 @@ export default function ScanLabPage() {
             opacity: 0,
         }),
     };
+
+    // Show scan limit block for free users who have exhausted their monthly scan
+    if (!isSubLoading && !canScan && !isPremium) {
+        return <ScanLimitBlock isLight={isLight} />;
+    }
 
     return (
         <div className="max-w-xl mx-auto">

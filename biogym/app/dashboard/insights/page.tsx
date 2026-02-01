@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useTheme } from "@/context/ThemeContext";
+import { useUser } from "@clerk/nextjs";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import HeatmapModel from "@/components/HeatmapModel";
@@ -94,13 +95,27 @@ function CircularProgress({ value, label, icon }: { value: number; label: string
 
 export default function BioInsightsPage() {
     const { theme } = useTheme();
+    const { user, isLoaded } = useUser();
     const isLight = theme === "light";
     const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
     const [activeDetail, setActiveDetail] = useState<string | null>(null);
 
-    // Load result from sessionStorage on mount (clears when browser closes)
+    // Load result from sessionStorage on mount - with user validation
     useEffect(() => {
+        if (!isLoaded) return;
+
         sessionStorage.removeItem("isScanned");
+
+        // Validate that session data belongs to current user
+        const storedUserId = sessionStorage.getItem("biogym-session-user");
+        const currentUserId = user?.id;
+
+        if (storedUserId && storedUserId !== currentUserId) {
+            // Data belongs to different user, don't load it
+            console.log("[Insights] Session data belongs to different user, skipping");
+            return;
+        }
+
         const savedResult = sessionStorage.getItem("scanlab-result");
         if (savedResult) {
             try {
@@ -111,7 +126,7 @@ export default function BioInsightsPage() {
                 console.error("Failed to parse scan result:", e);
             }
         }
-    }, []);
+    }, [isLoaded, user?.id]);
 
     if (!analysisResult) {
         return (

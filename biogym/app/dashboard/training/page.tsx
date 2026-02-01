@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useTheme } from "@/context/ThemeContext";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
@@ -8,6 +8,7 @@ import Image from "next/image";
 import { toast } from "sonner";
 import { useUser } from "@clerk/nextjs";
 import { saveExerciseLog } from "@/lib/firestore";
+import PremiumGate from "@/components/PremiumGate";
 
 interface Exercise {
     name: string;
@@ -32,7 +33,170 @@ interface AnalysisResult {
     [key: string]: unknown;
 }
 
+// Available workout images mapping - maps exercise names to their image files
+const WORKOUT_IMAGES: Record<string, string> = {
+    // Arm exercises
+    "arm circle": "/workouts/arm_circle.webp",
+    "arm circles": "/workouts/arm_circle.webp",
+    "bicep curl": "/workouts/bicep_curl.jpeg",
+    "bicep curls": "/workouts/bicep_curl.jpeg",
+    "hammer curl": "/workouts/hammer_curl.webp",
+    "hammer curls": "/workouts/hammer_curl.webp",
+    "tricep dip": "/workouts/tricep_dip.webp",
+    "tricep dips": "/workouts/tricep_dip.webp",
+    "tricep kickback": "/workouts/tricep_kickback.webp",
+    "tricep kickbacks": "/workouts/tricep_kickback.webp",
 
+    // Chest exercises
+    "push up": "/workouts/push_up.webp",
+    "push ups": "/workouts/push_up.webp",
+    "pushup": "/workouts/push_up.webp",
+    "pushups": "/workouts/push_up.webp",
+    "push-up": "/workouts/push_up.webp",
+    "push-ups": "/workouts/push_up.webp",
+    "diamond pushup": "/workouts/diamond_pushup.webp",
+    "diamond push up": "/workouts/diamond_pushup.webp",
+    "diamond push-up": "/workouts/diamond_pushup.webp",
+    "wide pushup": "/workouts/wide_pushup.jpeg",
+    "wide push up": "/workouts/wide_pushup.jpeg",
+    "wide push-up": "/workouts/wide_pushup.jpeg",
+    "pike pushup": "/workouts/pike_pushup.webp",
+    "pike push up": "/workouts/pike_pushup.webp",
+    "pike push-up": "/workouts/pike_pushup.webp",
+    "chest fly": "/workouts/chest_fly.jpg",
+    "chest flys": "/workouts/chest_fly.jpg",
+    "chest flies": "/workouts/chest_fly.jpg",
+    "pullover": "/workouts/pullover.webp",
+
+    // Back exercises
+    "bent over row": "/workouts/bent_over_row.webp",
+    "bent over rows": "/workouts/bent_over_row.webp",
+    "row": "/workouts/bent_over_row.webp",
+    "rows": "/workouts/bent_over_row.webp",
+    "upright row": "/workouts/upright_row.webp",
+    "upright rows": "/workouts/upright_row.webp",
+    "superman": "/workouts/superman.webp",
+    "supermans": "/workouts/superman.webp",
+    "good morning": "/workouts/good_morning.webp",
+    "good mornings": "/workouts/good_morning.webp",
+    "deadlift": "/workouts/deadlift.webp",
+    "deadlifts": "/workouts/deadlift.webp",
+
+    // Shoulder exercises
+    "front raise": "/workouts/front_raise.webp",
+    "front raises": "/workouts/front_raise.webp",
+    "lateral raise": "/workouts/lateral_raise.webp",
+    "lateral raises": "/workouts/lateral_raise.webp",
+    "overhead press": "/workouts/overhead_press.jpg",
+    "shoulder press": "/workouts/overhead_press.jpg",
+    "shrug": "/workouts/shrug.webp",
+    "shrugs": "/workouts/shrug.webp",
+
+    // Leg exercises
+    "squat": "/workouts/squat.webp",
+    "squats": "/workouts/squat.webp",
+    "goblet squat": "/workouts/goblet_squat.jpg",
+    "goblet squats": "/workouts/goblet_squat.jpg",
+    "sumo squat": "/workouts/sumo_squat.webp",
+    "sumo squats": "/workouts/sumo_squat.webp",
+    "squat jump": "/workouts/squat_jump.webp",
+    "squat jumps": "/workouts/squat_jump.webp",
+    "jump squat": "/workouts/squat_jump.webp",
+    "jump squats": "/workouts/squat_jump.webp",
+    "split squat": "/workouts/split_squat_left.webp",
+    "split squats": "/workouts/split_squat_left.webp",
+    "lunge": "/workouts/lunge_left.webp",
+    "lunges": "/workouts/lunge_left.webp",
+    "walking lunge": "/workouts/lunge_left.webp",
+    "walking lunges": "/workouts/lunge_left.webp",
+    "calf raise": "/workouts/calf-raise.webp",
+    "calf raises": "/workouts/calf-raise.webp",
+    "wall sit": "/workouts/wall_sit.webp",
+    "step up": "/workouts/step_up_left.webp",
+    "step ups": "/workouts/step_up_left.webp",
+    "box jump": "/workouts/box_jump.webp",
+    "box jumps": "/workouts/box_jump.webp",
+
+    // Glute exercises
+    "glute bridge": "/workouts/glute_bridge.jpeg",
+    "bridge": "/workouts/glute_bridge.jpeg",
+    "hip thrust": "/workouts/hip_thrust.jpg",
+    "hip thrusts": "/workouts/hip_thrust.jpg",
+    "donkey kick": "/workouts/donkey_kick_left.webp",
+    "donkey kicks": "/workouts/donkey_kick_left.webp",
+
+    // Core exercises
+    "crunch": "/workouts/crunch.jpeg",
+    "crunches": "/workouts/crunch.jpeg",
+    "bicycle crunch": "/workouts/bicycle_crunch.jpg",
+    "bicycle crunches": "/workouts/bicycle_crunch.jpg",
+    "reverse crunch": "/workouts/reverse_crunch.webp",
+    "reverse crunches": "/workouts/reverse_crunch.webp",
+    "plank": "/workouts/plank.webp",
+    "planks": "/workouts/plank.webp",
+    "side plank": "/workouts/side_plank_left.webp",
+    "side planks": "/workouts/side_plank_left.webp",
+    "leg raise": "/workouts/leg_raise.webp",
+    "leg raises": "/workouts/leg_raise.webp",
+    "russian twist": "/workouts/russian_twist.jpeg",
+    "russian twists": "/workouts/russian_twist.jpeg",
+    "mountain climber": "/workouts/mountain_climber.jpg",
+    "mountain climbers": "/workouts/mountain_climber.jpg",
+
+    // Cardio/Full body
+    "burpee": "/workouts/burpee.webp",
+    "burpees": "/workouts/burpee.webp",
+    "jumping jack": "/workouts/jumping_jack.webp",
+    "jumping jacks": "/workouts/jumping_jack.webp",
+    "high knee": "/workouts/high_knees.jpeg",
+    "high knees": "/workouts/high_knees.jpeg",
+    "butt kick": "/workouts/butt_kicks.webp",
+    "butt kicks": "/workouts/butt_kicks.webp",
+};
+
+// Function to match exercise name to workout image
+function getWorkoutImagePath(exerciseName: string): string | null {
+    if (!exerciseName) return null;
+
+    const normalizedName = exerciseName.toLowerCase().trim();
+
+    // Direct match
+    if (WORKOUT_IMAGES[normalizedName]) {
+        return WORKOUT_IMAGES[normalizedName];
+    }
+
+    // Partial match - check if any key is contained in the exercise name
+    for (const [key, path] of Object.entries(WORKOUT_IMAGES)) {
+        if (normalizedName.includes(key) || key.includes(normalizedName)) {
+            return path;
+        }
+    }
+
+    // Fuzzy match - check for common exercise patterns
+    const patterns = [
+        { pattern: /push\s*up|pushup/i, path: "/workouts/push_up.webp" },
+        { pattern: /squat/i, path: "/workouts/squat.webp" },
+        { pattern: /lunge/i, path: "/workouts/lunge_left.webp" },
+        { pattern: /curl/i, path: "/workouts/bicep_curl.jpeg" },
+        { pattern: /plank/i, path: "/workouts/plank.webp" },
+        { pattern: /crunch/i, path: "/workouts/crunch.jpeg" },
+        { pattern: /row/i, path: "/workouts/bent_over_row.webp" },
+        { pattern: /raise/i, path: "/workouts/lateral_raise.webp" },
+        { pattern: /press/i, path: "/workouts/overhead_press.jpg" },
+        { pattern: /jump/i, path: "/workouts/squat_jump.webp" },
+        { pattern: /dip/i, path: "/workouts/tricep_dip.webp" },
+        { pattern: /bridge|thrust/i, path: "/workouts/glute_bridge.jpeg" },
+        { pattern: /dead\s*lift/i, path: "/workouts/deadlift.webp" },
+    ];
+
+    for (const { pattern, path } of patterns) {
+        if (pattern.test(normalizedName)) {
+            return path;
+        }
+    }
+
+    return null;
+}
 
 // Generate expectation text based on exercise focus
 function getExpectation(focus: string): string {
@@ -68,10 +232,6 @@ export default function TrainingLabPage() {
     const [completedExercises, setCompletedExercises] = useState<Set<number>>(new Set());
     const [expandedExercise, setExpandedExercise] = useState<number | null>(null);
     const [selectedExercise, setSelectedExercise] = useState<number>(0);
-    const [generatedImages, setGeneratedImages] = useState<Record<string, string>>({});
-    const [isGeneratingImage, setIsGeneratingImage] = useState(false);
-
-
 
     // Timer and rep counter state
     const [isTimerRunning, setIsTimerRunning] = useState(false);
@@ -81,7 +241,18 @@ export default function TrainingLabPage() {
     const timerRef = useRef<NodeJS.Timeout | null>(null);
 
     // Load result from sessionStorage on mount (clears when browser closes)
+    // With user validation to prevent cross-user data leakage
     useEffect(() => {
+        // Validate that session data belongs to current user
+        const storedUserId = sessionStorage.getItem("biogym-session-user");
+        const currentUserId = user?.id;
+
+        if (storedUserId && currentUserId && storedUserId !== currentUserId) {
+            // Data belongs to different user, don't load it
+            console.log("[Training Lab] Session data belongs to different user, skipping");
+            return;
+        }
+
         const savedResult = sessionStorage.getItem("scanlab-result");
         console.log("=== TRAINING LAB DEBUG ===");
         console.log("Raw sessionStorage result:", savedResult);
@@ -96,7 +267,7 @@ export default function TrainingLabPage() {
                 console.error("Failed to parse scan result:", e);
             }
         }
-    }, []);
+    }, [user?.id]);
 
 
 
@@ -175,50 +346,7 @@ export default function TrainingLabPage() {
             } catch (error) {
                 console.error("Failed to save exercise log:", error);
                 toast.error("Failed to save progress");
-                // Optional: Revert UI state if save fails? 
-                // For now, let's keep UI optimistic but notify error.
             }
-        }
-    };
-
-    // AI Image Generation
-    const generateImage = async (exerciseName: string) => {
-        if (!exerciseName) return;
-
-        setIsGeneratingImage(true);
-        try {
-            const currentExerciseItem = exercises.find((e: any) =>
-                (typeof e === 'string' ? e : e.name) === exerciseName
-            );
-            const focus = typeof currentExerciseItem === 'string'
-                ? 'general fitness'
-                : currentExerciseItem?.focus || 'general fitness';
-
-            const response = await fetch('/api/generate-exercise-image', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    exerciseName,
-                    target: focus
-                })
-            });
-
-            const data = await response.json();
-
-            if (data.success && data.image) {
-                setGeneratedImages(prev => ({
-                    ...prev,
-                    [exerciseName]: data.image
-                }));
-                toast.success("AI Demo generated!");
-            } else {
-                toast.error(data.error || "Failed to generate image");
-            }
-        } catch (error) {
-            console.error("Generation error:", error);
-            toast.error("Failed to generate image");
-        } finally {
-            setIsGeneratingImage(false);
         }
     };
 
@@ -271,400 +399,365 @@ export default function TrainingLabPage() {
     }
 
     return (
-        <div className="min-h-[calc(100vh-120px)] lg:h-[calc(100vh-100px)] flex flex-col lg:flex-row gap-4 p-0 lg:p-4 pb-24 lg:pb-4">
-            {/* LEFT: Exercise Demo & Controls */}
-            <motion.div
-                initial={{ opacity: 0, x: -30 }}
-                animate={{ opacity: 1, x: 0 }}
-                className="lg:w-1/2 flex flex-col gap-4"
-            >
-                {/* Header */}
-                <div className={`rounded-2xl border px-5 py-3 ${isLight ? "bg-white border-gray-200" : "bg-[#1a1a1a] border-[#2a2a2a]"}`}>
-                    <div className="flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-[#D4FF00] animate-pulse"></span>
-                        <span className="text-xs text-gray-500 uppercase tracking-wider">Exercise Demo</span>
-                    </div>
-                    <h2 className={`text-xl font-bold uppercase mt-1 ${isLight ? "text-gray-900" : "text-white"}`}>
-                        {currentName || "Select Exercise"}
-                    </h2>
-                    <div className="flex flex-wrap gap-2 mt-2">
-                        <span className="px-2 py-1 text-xs rounded-full bg-[#D4FF00]/20 text-[#D4FF00] font-medium">
-                            Target: {currentFocus}
-                        </span>
-                    </div>
-                </div>
-
-                {/* Exercise GIF Display */}
-                <div className={`rounded-2xl border overflow-hidden aspect-square flex items-center justify-center relative ${isLight ? "bg-gray-50 border-gray-200" : "bg-[#0a0a0a] border-[#2a2a2a]"}`}>
-                    <AnimatePresence mode="wait">
-                        {isGeneratingImage ? (
-                            <motion.div
-                                key="generating"
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                exit={{ opacity: 0 }}
-                                className="flex flex-col items-center justify-center gap-4 p-8 text-center"
-                            >
-                                <div className="relative w-16 h-16">
-                                    <div className="absolute inset-0 border-4 border-[#D4FF00]/20 rounded-full"></div>
-                                    <div className="absolute inset-0 border-4 border-[#D4FF00] border-t-transparent rounded-full animate-spin"></div>
-                                    <div className="absolute inset-0 flex items-center justify-center text-xl">✨</div>
-                                </div>
-                                <div>
-                                    <p className={`font-medium ${isLight ? "text-gray-900" : "text-white"}`}>Generating AI Demo</p>
-                                    <p className="text-xs text-gray-500 mt-1">Creating custom visualization...</p>
-                                </div>
-                            </motion.div>
-                        ) : generatedImages[currentName] ? (
-                            <motion.div
-                                key="generated"
-                                initial={{ opacity: 0, scale: 0.95 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                exit={{ opacity: 0, scale: 0.95 }}
-                                className="w-full h-full relative group"
-                            >
-                                <Image
-                                    src={generatedImages[currentName]}
-                                    alt={currentName}
-                                    fill
-                                    className="object-cover"
-                                />
-                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            generateImage(currentName);
-                                        }}
-                                        className="px-4 py-2 bg-white/10 backdrop-blur-md hover:bg-white/20 text-white rounded-lg text-sm font-medium transition-colors"
-                                    >
-                                        🔄 Regenerate
-                                    </button>
-                                </div>
-                                <div className="absolute bottom-2 right-2 px-2 py-1 bg-black/60 backdrop-blur-sm rounded text-[10px] text-white/80">
-                                    Generated by Gemini
-                                </div>
-                            </motion.div>
-                        ) : (
-                            <motion.div
-                                key="placeholder"
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                exit={{ opacity: 0 }}
-                                className="text-center p-8 flex flex-col items-center"
-                            >
-                                <div className="text-6xl mb-4 opacity-50">🏋️</div>
-                                <p className={`text-lg font-bold uppercase ${isLight ? "text-gray-900" : "text-white"}`}>
-                                    {currentName || "Select an exercise"}
-                                </p>
-                                <p className={`text-sm mt-2 mb-6 ${isLight ? "text-gray-500" : "text-gray-400"}`}>
-                                    Select an exercise to view details
-                                </p>
-                                {currentName && (
-                                    <button
-                                        onClick={() => generateImage(currentName)}
-                                        className="flex items-center gap-2 px-5 py-2.5 bg-[#D4FF00] text-black rounded-xl font-medium hover:bg-[#c4ef00] transition-all shadow-lg hover:shadow-[#D4FF00]/20"
-                                    >
-                                        <span>✨</span>
-                                        Generate AI Demo
-                                    </button>
-                                )}
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
-                </div>
-
-                {/* Timer Display */}
-                <div className={`rounded-2xl border p-6 ${isLight ? "bg-white border-gray-200" : "bg-[#1a1a1a] border-[#2a2a2a]"}`}>
-                    <div className="text-center mb-4">
-                        <p className="text-gray-500 text-sm uppercase tracking-wider mb-2">Timer</p>
-                        <div className={`text-6xl font-mono font-bold ${isLight ? "text-gray-900" : "text-white"}`}>
-                            {formatTime(timeElapsed)}
+        <PremiumGate feature="Training Lab" description="Access personalized workout plans with AI-generated exercise demonstrations and track your sets and reps in real-time.">
+            <div className="min-h-[calc(100vh-120px)] lg:h-[calc(100vh-100px)] flex flex-col lg:flex-row gap-4 p-0 lg:p-4 pb-24 lg:pb-4">
+                {/* LEFT: Exercise Demo & Controls */}
+                <motion.div
+                    initial={{ opacity: 0, x: -30 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    className="lg:w-1/2 flex flex-col gap-4"
+                >
+                    {/* Header */}
+                    <div className={`rounded-2xl border px-5 py-3 ${isLight ? "bg-white border-gray-200" : "bg-[#1a1a1a] border-[#2a2a2a]"}`}>
+                        <div className="flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-[#D4FF00] animate-pulse"></span>
+                            <span className="text-xs text-gray-500 uppercase tracking-wider">Exercise Demo</span>
+                        </div>
+                        <h2 className={`text-xl font-bold uppercase mt-1 ${isLight ? "text-gray-900" : "text-white"}`}>
+                            {currentName || "Select Exercise"}
+                        </h2>
+                        <div className="flex flex-wrap gap-2 mt-2">
+                            <span className="px-2 py-1 text-xs rounded-full bg-[#D4FF00]/20 text-[#D4FF00] font-medium">
+                                Target: {currentFocus}
+                            </span>
                         </div>
                     </div>
-                    <div className="flex gap-3">
-                        <button
-                            onClick={toggleTimer}
-                            className={`flex-1 py-3 rounded-xl font-bold transition-all ${isTimerRunning
-                                ? "bg-red-500 hover:bg-red-600 text-white"
-                                : "bg-[#D4FF00] hover:bg-[#c4ef00] text-black"
-                                }`}
-                        >
-                            {isTimerRunning ? "⏸ Pause" : "▶ Start"}
-                        </button>
-                        <button
-                            onClick={resetTimer}
-                            className={`px-6 py-3 rounded-xl font-medium transition-all ${isLight ? "bg-gray-100 text-gray-700 hover:bg-gray-200" : "bg-[#2a2a2a] text-gray-300 hover:bg-[#3a3a3a]"
-                                }`}
-                        >
-                            🔄 Reset
-                        </button>
-                    </div>
-                </div>
 
-                {/* Rep Counter */}
-                <div className={`rounded-2xl border p-6 ${isLight ? "bg-white border-gray-200" : "bg-[#1a1a1a] border-[#2a2a2a]"}`}>
-                    <div className="text-center mb-4">
-                        <p className="text-gray-500 text-sm uppercase tracking-wider mb-2">Rep Counter</p>
-                        <div className="flex items-center justify-center gap-4 mb-4">
-                            <div className={`text-6xl font-bold ${isLight ? "text-gray-900" : "text-white"}`}>
-                                {repCount}
-                            </div>
-                            <div className="text-left">
-                                <p className="text-gray-500 text-xs">Set</p>
-                                <p className={`text-3xl font-bold ${isLight ? "text-gray-900" : "text-white"}`}>
-                                    {currentSet}
-                                </p>
+                    {/* Exercise Image Display */}
+                    <div className={`rounded-2xl border overflow-hidden aspect-square flex items-center justify-center relative ${isLight ? "bg-gray-50 border-gray-200" : "bg-[#0a0a0a] border-[#2a2a2a]"}`}>
+                        <AnimatePresence mode="wait">
+                            {getWorkoutImagePath(currentName) ? (
+                                <motion.div
+                                    key={`workout-${currentName}`}
+                                    initial={{ opacity: 0, scale: 0.95 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    exit={{ opacity: 0, scale: 0.95 }}
+                                    className="w-full h-full relative"
+                                >
+                                    <Image
+                                        src={getWorkoutImagePath(currentName)!}
+                                        alt={currentName}
+                                        fill
+                                        className="object-contain"
+                                        sizes="(max-width: 768px) 100vw, 50vw"
+                                    />
+                                    <div className="absolute bottom-2 right-2 px-2 py-1 bg-black/60 backdrop-blur-sm rounded text-[10px] text-white/80">
+                                        Exercise Demo
+                                    </div>
+                                </motion.div>
+                            ) : (
+                                <motion.div
+                                    key="placeholder"
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    exit={{ opacity: 0 }}
+                                    className="text-center p-8 flex flex-col items-center"
+                                >
+                                    <div className="text-6xl mb-4 opacity-50">🏋️</div>
+                                    <p className={`text-lg font-bold uppercase ${isLight ? "text-gray-900" : "text-white"}`}>
+                                        {currentName || "Select an exercise"}
+                                    </p>
+                                    <p className={`text-sm mt-2 ${isLight ? "text-gray-500" : "text-gray-400"}`}>
+                                        {currentName ? "No demo image available for this exercise" : "Select an exercise to view details"}
+                                    </p>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </div>
+
+                    {/* Timer Display */}
+                    <div className={`rounded-2xl border p-6 ${isLight ? "bg-white border-gray-200" : "bg-[#1a1a1a] border-[#2a2a2a]"}`}>
+                        <div className="text-center mb-4">
+                            <p className="text-gray-500 text-sm uppercase tracking-wider mb-2">Timer</p>
+                            <div className={`text-6xl font-mono font-bold ${isLight ? "text-gray-900" : "text-white"}`}>
+                                {formatTime(timeElapsed)}
                             </div>
                         </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
-                        <button
-                            onClick={decrementReps}
-                            disabled={repCount === 0}
-                            className={`py-4 rounded-xl font-bold text-2xl transition-all ${repCount === 0
-                                ? "bg-gray-800 text-gray-600 cursor-not-allowed"
-                                : isLight
-                                    ? "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                                    : "bg-[#2a2a2a] text-gray-300 hover:bg-[#3a3a3a]"
-                                }`}
-                        >
-                            −
-                        </button>
-                        <button
-                            onClick={incrementReps}
-                            className="bg-[#D4FF00] hover:bg-[#c4ef00] text-black py-4 rounded-xl font-bold text-2xl transition-all"
-                        >
-                            +
-                        </button>
-                    </div>
-                    <button
-                        onClick={nextSet}
-                        className={`w-full mt-3 py-3 rounded-xl font-medium transition-all ${isLight ? "bg-gray-900 text-white hover:bg-gray-800" : "bg-white text-black hover:bg-gray-100"
-                            }`}
-                    >
-                        Next Set →
-                    </button>
-                </div>
-            </motion.div>
-
-            {/* RIGHT: Exercise List */}
-            <motion.div
-                initial={{ opacity: 0, x: 30 }}
-                animate={{ opacity: 1, x: 0 }}
-                className="lg:w-1/2 flex flex-col gap-4"
-            >
-                {/* Header */}
-                <div>
-                    <h1 className={`text-3xl font-bold ${isLight ? "text-gray-900" : "text-white"}`}>
-                        TRAINING <span className="italic text-[#D4FF00]">LAB</span>
-                    </h1>
-                    <p className="text-gray-500 text-sm">
-                        Your personalized training protocol
-                    </p>
-                </div>
-
-                {/* Progress Bar */}
-                <div className={`rounded-xl p-3 border ${isLight ? "bg-white border-gray-200" : "bg-[#1a1a1a] border-[#2a2a2a]"}`}>
-                    <div className="flex items-center justify-between mb-2">
-                        <span className="text-xs text-gray-500">Progress</span>
-                        <span className="text-xs font-bold text-[#D4FF00]">{completedExercises.size}/{exercises.length}</span>
-                    </div>
-                    <div className={`h-2 rounded-full ${isLight ? "bg-gray-100" : "bg-[#2a2a2a]"}`}>
-                        <motion.div
-                            initial={{ width: 0 }}
-                            animate={{ width: `${progress}%` }}
-                            className="h-full rounded-full bg-[#D4FF00]"
-                        />
-                    </div>
-                </div>
-
-                {/* Exercise List */}
-                <div className="lg:flex-1 lg:overflow-y-auto space-y-2">
-                    {exercises.map((exercise, index) => {
-                        const isString = typeof exercise === "string";
-                        const name = isString ? exercise : (exercise.name || "Exercise");
-                        const focus = isString ? "General" : (exercise.focus || "General");
-                        const sets = isString ? "3 sets" : (exercise.sets || "3 sets");
-                        const reps = isString ? "12 reps" : (exercise.reps || "12 reps");
-                        const time = isString ? "45-60 sec" : (exercise.time || "45-60 sec");
-                        const difficulty = isString ? "intermediate" : (exercise.difficulty || "intermediate");
-                        const why = isString ? "" : (exercise.why || "");
-                        const isCompleted = completedExercises.has(index);
-                        const isExpanded = expandedExercise === index;
-                        const isSelected = selectedExercise === index;
-
-                        return (
-                            <motion.div
-                                key={index}
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: index * 0.05 }}
-                                className={`rounded-xl border overflow-hidden transition-all ${isSelected
-                                    ? "bg-[#D4FF00] border-[#D4FF00]"
-                                    : isLight
-                                        ? "bg-white border-gray-200 hover:border-gray-300"
-                                        : "bg-[#1a1a1a] border-[#2a2a2a] hover:border-[#3a3a3a]"
+                        <div className="flex gap-3">
+                            <button
+                                onClick={toggleTimer}
+                                className={`flex-1 py-3 rounded-xl font-bold transition-all ${isTimerRunning
+                                    ? "bg-red-500 hover:bg-red-600 text-white"
+                                    : "bg-[#D4FF00] hover:bg-[#c4ef00] text-black"
                                     }`}
                             >
-                                {/* Exercise Header */}
-                                <div
-                                    className="flex items-center gap-3 p-4 cursor-pointer"
-                                    onClick={() => {
-                                        setSelectedExercise(index);
-                                        setExpandedExercise(isExpanded ? null : index);
-                                    }}
-                                >
-                                    {/* Number Badge */}
-                                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm ${isSelected
-                                        ? "bg-black text-[#D4FF00]"
-                                        : isLight
-                                            ? "bg-gray-100 text-gray-600"
-                                            : "bg-[#2a2a2a] text-gray-400"
-                                        }`}>
-                                        {index + 1}
-                                    </div>
+                                {isTimerRunning ? "⏸ Pause" : "▶ Start"}
+                            </button>
+                            <button
+                                onClick={resetTimer}
+                                className={`px-6 py-3 rounded-xl font-medium transition-all ${isLight ? "bg-gray-100 text-gray-700 hover:bg-gray-200" : "bg-[#2a2a2a] text-gray-300 hover:bg-[#3a3a3a]"
+                                    }`}
+                            >
+                                🔄 Reset
+                            </button>
+                        </div>
+                    </div>
 
-                                    {/* Exercise Info */}
-                                    <div className="flex-1">
-                                        <div className="flex items-center gap-2">
-                                            <h3 className={`font-bold uppercase text-sm ${isSelected ? "text-black" : isLight ? "text-gray-900" : "text-white"
-                                                }`}>
-                                                {name}
-                                            </h3>
-                                            {/* Difficulty Badge */}
-                                            <span className={`px-1.5 py-0.5 text-[10px] font-bold uppercase rounded ${difficulty === 'beginner'
-                                                ? 'bg-green-500/20 text-green-400'
-                                                : difficulty === 'advanced'
-                                                    ? 'bg-red-500/20 text-red-400'
-                                                    : 'bg-yellow-500/20 text-yellow-400'
-                                                }`}>
-                                                {difficulty}
-                                            </span>
-                                        </div>
-                                        <p className={`text-xs uppercase ${isSelected ? "text-black/60" : "text-gray-500"
-                                            }`}>
-                                            {focus} • {sets} x {(reps || "12").replace(/[^0-9-]/g, '') || "12"}
-                                        </p>
-                                    </div>
-
-                                    {/* Checkbox */}
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            toggleComplete(index);
-                                        }}
-                                        className={`w-7 h-7 rounded-md flex items-center justify-center border-2 transition-all ${isCompleted
-                                            ? "bg-[#D4FF00] border-[#D4FF00]"
-                                            : isSelected
-                                                ? "border-black/30"
-                                                : "border-gray-600"
-                                            }`}
-                                    >
-                                        {isCompleted && (
-                                            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="black" strokeWidth="2">
-                                                <path d="M2 7l3 3 7-7" strokeLinecap="round" strokeLinejoin="round" />
-                                            </svg>
-                                        )}
-                                    </button>
-
-                                    {/* Expand Arrow */}
-                                    <div className={`transform transition-transform ${isExpanded ? "rotate-180" : ""}`}>
-                                        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke={isSelected ? "black" : "#6b7280"} strokeWidth="2">
-                                            <path d="M5 7l4 4 4-4" strokeLinecap="round" strokeLinejoin="round" />
-                                        </svg>
-                                    </div>
+                    {/* Rep Counter */}
+                    <div className={`rounded-2xl border p-6 ${isLight ? "bg-white border-gray-200" : "bg-[#1a1a1a] border-[#2a2a2a]"}`}>
+                        <div className="text-center mb-4">
+                            <p className="text-gray-500 text-sm uppercase tracking-wider mb-2">Rep Counter</p>
+                            <div className="flex items-center justify-center gap-4 mb-4">
+                                <div className={`text-6xl font-bold ${isLight ? "text-gray-900" : "text-white"}`}>
+                                    {repCount}
                                 </div>
+                                <div className="text-left">
+                                    <p className="text-gray-500 text-xs">Set</p>
+                                    <p className={`text-3xl font-bold ${isLight ? "text-gray-900" : "text-white"}`}>
+                                        {currentSet}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                            <button
+                                onClick={decrementReps}
+                                disabled={repCount === 0}
+                                className={`py-4 rounded-xl font-bold text-2xl transition-all ${repCount === 0
+                                    ? "bg-gray-800 text-gray-600 cursor-not-allowed"
+                                    : isLight
+                                        ? "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                                        : "bg-[#2a2a2a] text-gray-300 hover:bg-[#3a3a3a]"
+                                    }`}
+                            >
+                                −
+                            </button>
+                            <button
+                                onClick={incrementReps}
+                                className="bg-[#D4FF00] hover:bg-[#c4ef00] text-black py-4 rounded-xl font-bold text-2xl transition-all"
+                            >
+                                +
+                            </button>
+                        </div>
+                        <button
+                            onClick={nextSet}
+                            className={`w-full mt-3 py-3 rounded-xl font-medium transition-all ${isLight ? "bg-gray-900 text-white hover:bg-gray-800" : "bg-white text-black hover:bg-gray-100"
+                                }`}
+                        >
+                            Next Set →
+                        </button>
+                    </div>
+                </motion.div>
 
-                                {/* Expanded Content */}
-                                <AnimatePresence>
-                                    {isExpanded && (
-                                        <motion.div
-                                            initial={{ height: 0, opacity: 0 }}
-                                            animate={{ height: "auto", opacity: 1 }}
-                                            exit={{ height: 0, opacity: 0 }}
-                                            transition={{ duration: 0.2 }}
-                                            className={`border-t ${isSelected ? "border-black/10" : isLight ? "border-gray-100" : "border-[#2a2a2a]"}`}
+                {/* RIGHT: Exercise List */}
+                <motion.div
+                    initial={{ opacity: 0, x: 30 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    className="lg:w-1/2 flex flex-col gap-4"
+                >
+                    {/* Header */}
+                    <div>
+                        <h1 className={`text-3xl font-bold ${isLight ? "text-gray-900" : "text-white"}`}>
+                            TRAINING <span className="italic text-[#D4FF00]">LAB</span>
+                        </h1>
+                        <p className="text-gray-500 text-sm">
+                            Your personalized training protocol
+                        </p>
+                    </div>
+
+                    {/* Progress Bar */}
+                    <div className={`rounded-xl p-3 border ${isLight ? "bg-white border-gray-200" : "bg-[#1a1a1a] border-[#2a2a2a]"}`}>
+                        <div className="flex items-center justify-between mb-2">
+                            <span className="text-xs text-gray-500">Progress</span>
+                            <span className="text-xs font-bold text-[#D4FF00]">{completedExercises.size}/{exercises.length}</span>
+                        </div>
+                        <div className={`h-2 rounded-full ${isLight ? "bg-gray-100" : "bg-[#2a2a2a]"}`}>
+                            <motion.div
+                                initial={{ width: 0 }}
+                                animate={{ width: `${progress}%` }}
+                                className="h-full rounded-full bg-[#D4FF00]"
+                            />
+                        </div>
+                    </div>
+
+                    {/* Exercise List */}
+                    <div className="lg:flex-1 lg:overflow-y-auto space-y-2">
+                        {exercises.map((exercise, index) => {
+                            const isString = typeof exercise === "string";
+                            const name = isString ? exercise : (exercise.name || "Exercise");
+                            const focus = isString ? "General" : (exercise.focus || "General");
+                            const sets = isString ? "3 sets" : (exercise.sets || "3 sets");
+                            const reps = isString ? "12 reps" : (exercise.reps || "12 reps");
+                            const time = isString ? "45-60 sec" : (exercise.time || "45-60 sec");
+                            const difficulty = isString ? "intermediate" : (exercise.difficulty || "intermediate");
+                            const why = isString ? "" : (exercise.why || "");
+                            const isCompleted = completedExercises.has(index);
+                            const isExpanded = expandedExercise === index;
+                            const isSelected = selectedExercise === index;
+
+                            return (
+                                <motion.div
+                                    key={index}
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: index * 0.05 }}
+                                    className={`rounded-xl border overflow-hidden transition-all ${isSelected
+                                        ? "bg-[#D4FF00] border-[#D4FF00]"
+                                        : isLight
+                                            ? "bg-white border-gray-200 hover:border-gray-300"
+                                            : "bg-[#1a1a1a] border-[#2a2a2a] hover:border-[#3a3a3a]"
+                                        }`}
+                                >
+                                    {/* Exercise Header */}
+                                    <div
+                                        className="flex items-center gap-3 p-4 cursor-pointer"
+                                        onClick={() => {
+                                            setSelectedExercise(index);
+                                            setExpandedExercise(isExpanded ? null : index);
+                                        }}
+                                    >
+                                        {/* Number Badge */}
+                                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm ${isSelected
+                                            ? "bg-black text-[#D4FF00]"
+                                            : isLight
+                                                ? "bg-gray-100 text-gray-600"
+                                                : "bg-[#2a2a2a] text-gray-400"
+                                            }`}>
+                                            {index + 1}
+                                        </div>
+
+                                        {/* Exercise Info */}
+                                        <div className="flex-1">
+                                            <div className="flex items-center gap-2">
+                                                <h3 className={`font-bold uppercase text-sm ${isSelected ? "text-black" : isLight ? "text-gray-900" : "text-white"
+                                                    }`}>
+                                                    {name}
+                                                </h3>
+                                                {/* Difficulty Badge */}
+                                                <span className={`px-1.5 py-0.5 text-[10px] font-bold uppercase rounded ${difficulty === 'beginner'
+                                                    ? 'bg-green-500/20 text-green-400'
+                                                    : difficulty === 'advanced'
+                                                        ? 'bg-red-500/20 text-red-400'
+                                                        : 'bg-yellow-500/20 text-yellow-400'
+                                                    }`}>
+                                                    {difficulty}
+                                                </span>
+                                            </div>
+                                            <p className={`text-xs uppercase ${isSelected ? "text-black/60" : "text-gray-500"
+                                                }`}>
+                                                {focus} • {sets} x {(reps || "12").replace(/[^0-9-]/g, '') || "12"}
+                                            </p>
+                                        </div>
+
+                                        {/* Checkbox */}
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                toggleComplete(index);
+                                            }}
+                                            className={`w-7 h-7 rounded-md flex items-center justify-center border-2 transition-all ${isCompleted
+                                                ? "bg-[#D4FF00] border-[#D4FF00]"
+                                                : isSelected
+                                                    ? "border-black/30"
+                                                    : "border-gray-600"
+                                                }`}
                                         >
-                                            <div className={`p-4 ${isSelected ? "bg-[#c4ef00]" : ""}`}>
-                                                {/* Stats Grid */}
-                                                <div className="grid grid-cols-3 gap-3 mb-4">
-                                                    <div className={`rounded-lg p-3 text-center ${isSelected ? "bg-black/10" : isLight ? "bg-gray-50" : "bg-[#0f0f0f]"
-                                                        }`}>
-                                                        <p className={`text-lg font-bold ${isSelected ? "text-black" : isLight ? "text-gray-900" : "text-white"}`}>
-                                                            {sets}
-                                                        </p>
-                                                        <p className={`text-xs ${isSelected ? "text-black/60" : "text-gray-500"}`}>Sets</p>
-                                                    </div>
-                                                    <div className={`rounded-lg p-3 text-center ${isSelected ? "bg-black/10" : isLight ? "bg-gray-50" : "bg-[#0f0f0f]"
-                                                        }`}>
-                                                        <p className={`text-lg font-bold ${isSelected ? "text-black" : isLight ? "text-gray-900" : "text-white"}`}>
-                                                            {reps}
-                                                        </p>
-                                                        <p className={`text-xs ${isSelected ? "text-black/60" : "text-gray-500"}`}>Reps</p>
-                                                    </div>
-                                                    <div className={`rounded-lg p-3 text-center ${isSelected ? "bg-black/10" : isLight ? "bg-gray-50" : "bg-[#0f0f0f]"
-                                                        }`}>
-                                                        <p className={`text-lg font-bold ${isSelected ? "text-black" : isLight ? "text-gray-900" : "text-white"}`}>
-                                                            {time}
-                                                        </p>
-                                                        <p className={`text-xs ${isSelected ? "text-black/60" : "text-gray-500"}`}>Time</p>
-                                                    </div>
-                                                </div>
+                                            {isCompleted && (
+                                                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="black" strokeWidth="2">
+                                                    <path d="M2 7l3 3 7-7" strokeLinecap="round" strokeLinejoin="round" />
+                                                </svg>
+                                            )}
+                                        </button>
 
-                                                {/* Why This Exercise - from Gemini */}
-                                                {why && (
-                                                    <div className={`rounded-lg p-4 mb-4 ${isSelected ? "bg-black/10" : isLight ? "bg-gray-50" : "bg-[#0f0f0f]"
+                                        {/* Expand Arrow */}
+                                        <div className={`transform transition-transform ${isExpanded ? "rotate-180" : ""}`}>
+                                            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke={isSelected ? "black" : "#6b7280"} strokeWidth="2">
+                                                <path d="M5 7l4 4 4-4" strokeLinecap="round" strokeLinejoin="round" />
+                                            </svg>
+                                        </div>
+                                    </div>
+
+                                    {/* Expanded Content */}
+                                    <AnimatePresence>
+                                        {isExpanded && (
+                                            <motion.div
+                                                initial={{ height: 0, opacity: 0 }}
+                                                animate={{ height: "auto", opacity: 1 }}
+                                                exit={{ height: 0, opacity: 0 }}
+                                                transition={{ duration: 0.2 }}
+                                                className={`border-t ${isSelected ? "border-black/10" : isLight ? "border-gray-100" : "border-[#2a2a2a]"}`}
+                                            >
+                                                <div className={`p-4 ${isSelected ? "bg-[#c4ef00]" : ""}`}>
+                                                    {/* Stats Grid */}
+                                                    <div className="grid grid-cols-3 gap-3 mb-4">
+                                                        <div className={`rounded-lg p-3 text-center ${isSelected ? "bg-black/10" : isLight ? "bg-gray-50" : "bg-[#0f0f0f]"
+                                                            }`}>
+                                                            <p className={`text-lg font-bold ${isSelected ? "text-black" : isLight ? "text-gray-900" : "text-white"}`}>
+                                                                {sets}
+                                                            </p>
+                                                            <p className={`text-xs ${isSelected ? "text-black/60" : "text-gray-500"}`}>Sets</p>
+                                                        </div>
+                                                        <div className={`rounded-lg p-3 text-center ${isSelected ? "bg-black/10" : isLight ? "bg-gray-50" : "bg-[#0f0f0f]"
+                                                            }`}>
+                                                            <p className={`text-lg font-bold ${isSelected ? "text-black" : isLight ? "text-gray-900" : "text-white"}`}>
+                                                                {reps}
+                                                            </p>
+                                                            <p className={`text-xs ${isSelected ? "text-black/60" : "text-gray-500"}`}>Reps</p>
+                                                        </div>
+                                                        <div className={`rounded-lg p-3 text-center ${isSelected ? "bg-black/10" : isLight ? "bg-gray-50" : "bg-[#0f0f0f]"
+                                                            }`}>
+                                                            <p className={`text-lg font-bold ${isSelected ? "text-black" : isLight ? "text-gray-900" : "text-white"}`}>
+                                                                {time}
+                                                            </p>
+                                                            <p className={`text-xs ${isSelected ? "text-black/60" : "text-gray-500"}`}>Time</p>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Why This Exercise - from Gemini */}
+                                                    {why && (
+                                                        <div className={`rounded-lg p-4 mb-4 ${isSelected ? "bg-black/10" : isLight ? "bg-gray-50" : "bg-[#0f0f0f]"
+                                                            }`}>
+                                                            <div className="flex items-center gap-2 mb-2">
+                                                                <span className="text-lg">🎯</span>
+                                                                <span className={`text-xs font-bold uppercase ${isSelected ? "text-black" : isLight ? "text-gray-700" : "text-gray-300"
+                                                                    }`}>
+                                                                    Why This Exercise
+                                                                </span>
+                                                            </div>
+                                                            <p className={`text-sm leading-relaxed ${isSelected ? "text-black/80" : isLight ? "text-gray-600" : "text-gray-400"
+                                                                }`}>
+                                                                {why}
+                                                            </p>
+                                                        </div>
+                                                    )}
+
+                                                    {/* Expectation Box */}
+                                                    <div className={`rounded-lg p-4 ${isSelected ? "bg-black/10" : isLight ? "bg-gray-50" : "bg-[#0f0f0f]"
                                                         }`}>
                                                         <div className="flex items-center gap-2 mb-2">
-                                                            <span className="text-lg">🎯</span>
+                                                            <span className="text-lg">📈</span>
                                                             <span className={`text-xs font-bold uppercase ${isSelected ? "text-black" : isLight ? "text-gray-700" : "text-gray-300"
                                                                 }`}>
-                                                                Why This Exercise
+                                                                What to Expect (2-4 Weeks)
                                                             </span>
                                                         </div>
                                                         <p className={`text-sm leading-relaxed ${isSelected ? "text-black/80" : isLight ? "text-gray-600" : "text-gray-400"
                                                             }`}>
-                                                            {why}
+                                                            {getExpectation(focus)}
                                                         </p>
                                                     </div>
-                                                )}
-
-                                                {/* Expectation Box */}
-                                                <div className={`rounded-lg p-4 ${isSelected ? "bg-black/10" : isLight ? "bg-gray-50" : "bg-[#0f0f0f]"
-                                                    }`}>
-                                                    <div className="flex items-center gap-2 mb-2">
-                                                        <span className="text-lg">📈</span>
-                                                        <span className={`text-xs font-bold uppercase ${isSelected ? "text-black" : isLight ? "text-gray-700" : "text-gray-300"
-                                                            }`}>
-                                                            What to Expect (2-4 Weeks)
-                                                        </span>
-                                                    </div>
-                                                    <p className={`text-sm leading-relaxed ${isSelected ? "text-black/80" : isLight ? "text-gray-600" : "text-gray-400"
-                                                        }`}>
-                                                        {getExpectation(focus)}
-                                                    </p>
                                                 </div>
-                                            </div>
-                                        </motion.div>
-                                    )}
-                                </AnimatePresence>
-                            </motion.div>
-                        );
-                    })}
-                </div>
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
+                                </motion.div>
+                            );
+                        })}
+                    </div>
 
-                {/* Back to Insights Button */}
-                <Link
-                    href="/dashboard/insights"
-                    className={`flex items-center justify-center gap-2 py-3 rounded-xl font-medium transition-all ${isLight ? "bg-gray-100 text-gray-700 hover:bg-gray-200" : "bg-[#2a2a2a] text-gray-300 hover:bg-[#3a3a3a]"
-                        }`}
-                >
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M10 12l-4-4 4-4" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                    Back to Insights
-                </Link>
-            </motion.div>
-        </div>
+                    {/* Back to Insights Button */}
+                    <Link
+                        href="/dashboard/insights"
+                        className={`flex items-center justify-center gap-2 py-3 rounded-xl font-medium transition-all ${isLight ? "bg-gray-100 text-gray-700 hover:bg-gray-200" : "bg-[#2a2a2a] text-gray-300 hover:bg-[#3a3a3a]"
+                            }`}
+                    >
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M10 12l-4-4 4-4" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                        Back to Insights
+                    </Link>
+                </motion.div>
+            </div>
+        </PremiumGate>
     );
 }

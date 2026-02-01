@@ -121,7 +121,7 @@ export default function HeatmapModel({ scanResult }: HeatmapModelProps) {
         <div className="w-full h-full flex flex-col lg:flex-row gap-4">
             {/* Anatomy Image with Interactive Regions */}
             <div className="relative flex-1 min-h-[400px] flex items-center justify-center">
-                <div className="relative w-full max-w-[300px] aspect-[3/5]">
+                <div className="relative w-full max-w-[550px] aspect-[3/5]">
                     {/* Anatomy base image */}
                     <Image
                         src="/HumanAnatomy.png"

@@ -14,8 +14,15 @@ export async function GET(request: NextRequest) {
         const hasKey = !!process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
         status.checks.envVarPresent = hasKey;
 
+        // DEBUG: List available keys (names only) to check for typos
+        const availableKeys = Object.keys(process.env).filter(k => k.startsWith('FIREBASE'));
+        status.debug = {
+            foundFirebaseKeys: availableKeys,
+            nodeEnv: process.env.NODE_ENV
+        };
+
         if (!hasKey) {
-            status.error = 'FIREBASE_SERVICE_ACCOUNT_KEY is missing from environment variables';
+            status.error = 'FIREBASE_SERVICE_ACCOUNT_KEY is missing from Production environment variables. Check Vercel Settings.';
             return NextResponse.json(status, { status: 500 });
         }
 

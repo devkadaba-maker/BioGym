@@ -1,12 +1,17 @@
 import { NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
-import { getSubscription, canUserScan } from '@/lib/firestore-admin';
+import { auth, currentUser } from '@clerk/nextjs/server';
+import { stripe } from '@/lib/stripe';
+
+interface SubscriptionStatus {
+    status: 'free' | 'active' | 'trialing' | 'canceled' | 'past_due';
+}
 
 export async function GET() {
     console.log('[STATUS API] Checking subscription status...');
 
     try {
         const { userId } = await auth();
+        const user = await currentUser();
         console.log('[STATUS API] User ID:', userId);
 
         if (!userId) {
@@ -17,28 +22,72 @@ export async function GET() {
             );
         }
 
-        console.log('[STATUS API] Fetching subscription for:', userId);
-        const [subscription, scanStatus] = await Promise.all([
-            getSubscription(userId),
-            canUserScan(userId),
-        ]);
+        // Try Firebase first, fall back to Stripe if Firebase fails
+        let subscription: SubscriptionStatus = { status: 'free' };
+        let isPremium = false;
+        let canScan = true;
+        let scansRemaining = 1;
 
-        console.log('[STATUS API] Subscription data:', JSON.stringify(subscription));
-        console.log('[STATUS API] Scan status:', JSON.stringify(scanStatus));
+        try {
+            // Dynamic import to avoid build-time Firebase initialization issues
+            const { getSubscription, canUserScan } = await import('@/lib/firestore-admin');
 
-        const isPremium = subscription.status === 'active' || subscription.status === 'trialing';
+            console.log('[STATUS API] Fetching subscription from Firebase...');
+            const [firebaseSub, scanStatus] = await Promise.all([
+                getSubscription(userId),
+                canUserScan(userId),
+            ]);
+
+            console.log('[STATUS API] Firebase subscription:', JSON.stringify(firebaseSub));
+
+            if (firebaseSub.status === 'active' || firebaseSub.status === 'trialing') {
+                isPremium = true;
+                subscription = { status: firebaseSub.status };
+            }
+
+            canScan = scanStatus.canScan;
+            scansRemaining = scanStatus.scansRemaining;
+        } catch (firebaseError) {
+            console.error('[STATUS API] Firebase failed, checking Stripe directly:', firebaseError);
+
+            // Fallback: Check Stripe directly using user email
+            const email = user?.emailAddresses?.[0]?.emailAddress;
+            if (email) {
+                try {
+                    const customers = await stripe.customers.list({ email, limit: 1 });
+                    if (customers.data.length > 0) {
+                        const customerId = customers.data[0].id;
+                        const subscriptions = await stripe.subscriptions.list({
+                            customer: customerId,
+                            limit: 1,
+                        });
+
+                        if (subscriptions.data.length > 0) {
+                            const stripeSub = subscriptions.data[0];
+                            if (stripeSub.status === 'active' || stripeSub.status === 'trialing') {
+                                isPremium = true;
+                                subscription = {
+                                    status: stripeSub.status === 'active' ? 'active' : 'trialing'
+                                };
+                                console.log('[STATUS API] ✅ Found active Stripe subscription');
+                            }
+                        }
+                    }
+                } catch (stripeError) {
+                    console.error('[STATUS API] Stripe fallback also failed:', stripeError);
+                }
+            }
+        }
+
         console.log('[STATUS API] isPremium:', isPremium);
 
         return NextResponse.json({
             subscription: {
                 status: subscription.status,
-                currentPeriodEnd: subscription.currentPeriodEnd?.toISOString(),
-                cancelAtPeriodEnd: subscription.cancelAtPeriodEnd,
-                trialEnd: subscription.trialEnd?.toISOString(),
             },
             isPremium,
-            canScan: scanStatus.canScan,
-            scansRemaining: scanStatus.scansRemaining,
+            canScan: isPremium ? true : canScan,
+            scansRemaining: isPremium ? -1 : scansRemaining,
         });
     } catch (error) {
         console.error('[STATUS API] ❌ Error:', error);
@@ -48,4 +97,3 @@ export async function GET() {
         );
     }
 }
-

@@ -1,10 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth, currentUser } from '@clerk/nextjs/server';
 import { stripe } from '@/lib/stripe';
-
-interface SubscriptionStatus {
-    status: 'free' | 'active' | 'trialing' | 'canceled' | 'past_due';
-}
+import { getSubscription, canUserScan } from '@/lib/firestore-admin';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,92 +14,103 @@ export async function GET() {
         console.log('[STATUS API] User ID:', userId);
 
         if (!userId) {
-            console.log('[STATUS API] ❌ No user ID - unauthorized');
-            return NextResponse.json(
-                { error: 'Unauthorized' },
-                { status: 401 }
-            );
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        // Try Firebase first, fall back to Stripe if Firebase fails
-        let subscription: SubscriptionStatus = { status: 'free' };
         let isPremium = false;
-        let canScan = true;
-        let scansRemaining = 1;
+        let firestoreStatus = 'unknown';
+        let stripeFallbackStatus = 'skipped';
+        let debugError = null;
 
+        // 1. Check Firestore
         try {
-            // Dynamic import to avoid build-time Firebase initialization issues
-            const { getSubscription, canUserScan } = await import('@/lib/firestore-admin');
-
-            console.log('[STATUS API] Fetching subscription from Firebase...');
             const [firebaseSub, scanStatus] = await Promise.all([
                 getSubscription(userId),
                 canUserScan(userId),
             ]);
 
-            console.log('[STATUS API] Firebase subscription:', JSON.stringify(firebaseSub));
+            firestoreStatus = firebaseSub.status || 'missing';
 
             if (firebaseSub.status === 'active' || firebaseSub.status === 'trialing') {
                 isPremium = true;
-                subscription = { status: firebaseSub.status };
             }
 
-            canScan = scanStatus.canScan;
-            scansRemaining = scanStatus.scansRemaining;
-        } catch (firebaseError) {
-            console.error('[STATUS API] Firebase failed, checking Stripe directly:', firebaseError);
+            // Return immediately if found
+            if (isPremium) {
+                return NextResponse.json({
+                    subscription: { status: firebaseSub.status },
+                    isPremium: true,
+                    canScan: true,
+                    scansRemaining: -1,
+                    source: 'firestore'
+                });
+            }
+        } catch (err) {
+            console.error('[STATUS API] Firestore check failed:', err);
+            debugError = err instanceof Error ? err.message : String(err);
+            firestoreStatus = 'error';
+        }
 
-            // Fallback: Check Stripe directly using user email
+        // 2. Check Stripe Fallback (if Firestore failed or returned free)
+        if (!isPremium) {
             const email = user?.emailAddresses?.[0]?.emailAddress;
             if (email) {
                 try {
+                    stripeFallbackStatus = 'checking';
                     const customers = await stripe.customers.list({ email, limit: 1 });
                     if (customers.data.length > 0) {
                         const customerId = customers.data[0].id;
                         const subscriptions = await stripe.subscriptions.list({
                             customer: customerId,
+                            status: 'all', // Check all to be sure
                             limit: 1,
                         });
 
                         if (subscriptions.data.length > 0) {
-                            const stripeSub = subscriptions.data[0];
-                            if (stripeSub.status === 'active' || stripeSub.status === 'trialing') {
+                            const sub = subscriptions.data[0];
+                            stripeFallbackStatus = sub.status;
+                            if (sub.status === 'active' || sub.status === 'trialing') {
                                 isPremium = true;
-                                subscription = {
-                                    status: stripeSub.status === 'active' ? 'active' : 'trialing'
-                                };
-                                console.log('[STATUS API] ✅ Found active Stripe subscription');
+                                return NextResponse.json({
+                                    subscription: { status: sub.status },
+                                    isPremium: true,
+                                    canScan: true,
+                                    scansRemaining: -1,
+                                    source: 'stripe_fallback'
+                                });
                             }
+                        } else {
+                            stripeFallbackStatus = 'no_subscription';
                         }
+                    } else {
+                        stripeFallbackStatus = 'no_customer';
                     }
-                } catch (stripeError) {
-                    console.error('[STATUS API] Stripe fallback also failed:', stripeError);
+                } catch (stripeErr) {
+                    console.error('[STATUS API] Stripe fallback failed:', stripeErr);
+                    stripeFallbackStatus = 'error';
                 }
             }
         }
 
-        console.log('[STATUS API] isPremium:', isPremium);
-
+        // If we get here, user is likely free
+        // But we include debug info to help diagnose the "Already Subscribed" bug
         return NextResponse.json({
-            subscription: {
-                status: subscription.status,
-            },
-            isPremium,
-            canScan: isPremium ? true : canScan,
-            scansRemaining: isPremium ? -1 : scansRemaining,
+            subscription: { status: 'free' },
+            isPremium: false,
+            canScan: true, // Default to true for free tier (1 scan)
+            scansRemaining: 1, // Default
+            debug: {
+                userId,
+                firestoreStatus,
+                stripeFallbackStatus,
+                error: debugError
+            }
         });
-    } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-        const errorStack = error instanceof Error ? error.stack : undefined;
-        console.error('[STATUS API] ❌ Error:', errorMessage);
-        console.error('[STATUS API] Stack:', errorStack);
 
-        const isDev = process.env.NODE_ENV === 'development';
+    } catch (error) {
+        console.error('[STATUS API] Critical Error:', error);
         return NextResponse.json(
-            {
-                error: isDev ? errorMessage : 'Failed to get subscription status',
-                ...(isDev && { stack: errorStack })
-            },
+            { error: 'Failed to get subscription status' },
             { status: 500 }
         );
     }

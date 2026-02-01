@@ -136,23 +136,30 @@ export async function saveExerciseLog(
         workoutId?: string;
     }
 ): Promise<string> {
-    const workoutsRef = db.collection('users').doc(userId).collection('workouts');
+    try {
+        console.log(`[firestore-admin] Saving exercise log for user ${userId}:`, exercise.name);
+        const workoutsRef = db.collection('users').doc(userId).collection('workouts');
 
-    const docData = {
-        userId,
-        timestamp: Timestamp.now(),
-        exerciseName: exercise.name,
-        sets: exercise.sets,
-        reps: exercise.reps,
-        time: exercise.time,
-        actualDuration: exercise.actualDuration || 0,
-        focus: exercise.focus,
-        difficulty: exercise.difficulty || 'intermediate',
-        workoutId: exercise.workoutId || 'custom',
-    };
+        const docData = {
+            userId,
+            timestamp: Timestamp.now(),
+            exerciseName: exercise.name,
+            sets: exercise.sets,
+            reps: exercise.reps,
+            time: exercise.time,
+            actualDuration: exercise.actualDuration || 0,
+            focus: exercise.focus,
+            difficulty: exercise.difficulty || 'intermediate',
+            workoutId: exercise.workoutId || 'custom',
+        };
 
-    const docRef = await workoutsRef.add(docData);
-    return docRef.id;
+        const docRef = await workoutsRef.add(docData);
+        console.log(`[firestore-admin] Exercise log saved with ID: ${docRef.id}`);
+        return docRef.id;
+    } catch (error) {
+        console.error('[firestore-admin] saveExerciseLog failed:', error);
+        throw error;
+    }
 }
 
 /**
@@ -162,28 +169,48 @@ export async function getExerciseLogs(
     userId: string,
     maxResults: number = 50
 ): Promise<ExerciseLog[]> {
-    const workoutsRef = db.collection('users').doc(userId).collection('workouts');
-    const snapshot = await workoutsRef.orderBy('timestamp', 'desc').limit(maxResults).get();
+    try {
+        const workoutsRef = db.collection('users').doc(userId).collection('workouts');
+        const snapshot = await workoutsRef.orderBy('timestamp', 'desc').limit(maxResults).get();
 
-    const logs: ExerciseLog[] = [];
-    snapshot.forEach((doc) => {
-        const data = doc.data();
-        logs.push({
-            id: doc.id,
-            userId: data.userId,
-            timestamp: data.timestamp.toDate(),
-            exerciseName: data.exerciseName,
-            sets: data.sets,
-            reps: data.reps,
-            time: data.time,
-            actualDuration: data.actualDuration,
-            focus: data.focus,
-            difficulty: data.difficulty,
-            workoutId: data.workoutId,
+        const logs: ExerciseLog[] = [];
+        snapshot.forEach((doc) => {
+            try {
+                const data = doc.data();
+                // Safely handle timestamp, fallback to current time if missing/invalid
+                let timestamp = new Date();
+                if (data.timestamp && typeof data.timestamp.toDate === 'function') {
+                    timestamp = data.timestamp.toDate();
+                } else if (data.timestamp instanceof Date) {
+                    timestamp = data.timestamp;
+                } else if (typeof data.timestamp === 'string' || typeof data.timestamp === 'number') {
+                    timestamp = new Date(data.timestamp);
+                }
+
+                logs.push({
+                    id: doc.id,
+                    userId: data.userId || userId,
+                    timestamp,
+                    exerciseName: data.exerciseName || 'Unknown Exercise',
+                    sets: data.sets?.toString() || '0',
+                    reps: data.reps?.toString() || '0',
+                    time: data.time?.toString() || '',
+                    actualDuration: typeof data.actualDuration === 'number' ? data.actualDuration : 0,
+                    focus: data.focus || 'General',
+                    difficulty: data.difficulty || 'intermediate',
+                    workoutId: data.workoutId,
+                });
+            } catch (err) {
+                console.error(`[firestore-admin] Error parsing exercise log ${doc.id}:`, err);
+                // Continue with other logs instead of failing the whole request
+            }
         });
-    });
 
-    return logs;
+        return logs;
+    } catch (error) {
+        console.error('[firestore-admin] getExerciseLogs failed:', error);
+        throw error; // Re-throw to be handled by the route
+    }
 }
 
 /**
@@ -193,23 +220,43 @@ export async function getScanHistory(
     userId: string,
     maxResults: number = 50
 ): Promise<ScanRecord[]> {
-    const scansRef = db.collection('users').doc(userId).collection('scans');
-    const snapshot = await scansRef.orderBy('timestamp', 'desc').limit(maxResults).get();
+    try {
+        const scansRef = db.collection('users').doc(userId).collection('scans');
+        const snapshot = await scansRef.orderBy('timestamp', 'desc').limit(maxResults).get();
 
-    const scans: ScanRecord[] = [];
-    snapshot.forEach((doc) => {
-        const data = doc.data();
-        scans.push({
-            id: doc.id,
-            userId: data.userId,
-            timestamp: data.timestamp.toDate(),
-            analysis: data.analysis,
-            recommendation: data.recommendation,
-            Details: data.Details,
+        const scans: ScanRecord[] = [];
+        snapshot.forEach((doc) => {
+            try {
+                const data = doc.data();
+
+                // Safely handle timestamp
+                let timestamp = new Date();
+                if (data.timestamp && typeof data.timestamp.toDate === 'function') {
+                    timestamp = data.timestamp.toDate();
+                } else if (data.timestamp instanceof Date) {
+                    timestamp = data.timestamp;
+                } else if (typeof data.timestamp === 'string' || typeof data.timestamp === 'number') {
+                    timestamp = new Date(data.timestamp);
+                }
+
+                scans.push({
+                    id: doc.id,
+                    userId: data.userId || userId,
+                    timestamp,
+                    analysis: data.analysis || {},
+                    recommendation: data.recommendation,
+                    Details: data.Details,
+                });
+            } catch (err) {
+                console.error(`[firestore-admin] Error parsing scan record ${doc.id}:`, err);
+            }
         });
-    });
 
-    return scans;
+        return scans;
+    } catch (error) {
+        console.error('[firestore-admin] getScanHistory failed:', error);
+        throw error;
+    }
 }
 
 /**

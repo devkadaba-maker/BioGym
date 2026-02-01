@@ -33,23 +33,23 @@ export default function Navbar() {
         <header className="fixed top-0 left-0 right-0 z-50 px-6 py-4 glass">
             <nav className="max-w-7xl mx-auto flex items-center justify-between">
                 {/* Mobile Back Button - shown on non-homepage */}
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
                     {!isLandingPage && (
                         <Link
                             href="/"
-                            className="md:hidden p-2 rounded-full hover:bg-white/10 transition-colors active:scale-95"
+                            className="lg:hidden p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors active:scale-95"
                             aria-label="Back to home"
                         >
                             <svg
-                                width="20"
-                                height="20"
-                                viewBox="0 0 20 20"
+                                width="18"
+                                height="18"
+                                viewBox="0 0 24 24"
                                 fill="none"
                                 stroke="currentColor"
-                                strokeWidth="2"
-                                className="text-white"
+                                strokeWidth="2.5"
+                                className="text-[#D4FF00]"
                             >
-                                <path d="M12 4L6 10L12 16" strokeLinecap="round" strokeLinejoin="round" />
+                                <path d="M15 18l-6-6 6-6" strokeLinecap="round" strokeLinejoin="round" />
                             </svg>
                         </Link>
                     )}

@@ -1,8 +1,20 @@
 import { SignIn } from "@clerk/nextjs";
+import Link from "next/link";
 
 export default function SignInPage() {
     return (
         <div className="min-h-screen bg-[#1a1a1a] flex items-center justify-center relative overflow-hidden">
+            {/* Back Button */}
+            <Link
+                href="/"
+                className="absolute top-5 left-5 z-20 p-2.5 rounded-lg bg-white/5 hover:bg-white/10 transition-all active:scale-95"
+                aria-label="Back to home"
+            >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D4FF00" strokeWidth="2.5">
+                    <path d="M15 18l-6-6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+            </Link>
+
             {/* Background gradient effects */}
             <div className="absolute inset-0 bg-gradient-to-br from-[#D4FF00]/5 via-transparent to-[#D4FF00]/5" />
             <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#D4FF00]/10 rounded-full blur-3xl" />

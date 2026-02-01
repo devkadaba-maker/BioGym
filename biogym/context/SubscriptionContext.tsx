@@ -74,7 +74,8 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
                     window.location.href = data.url;
                 } else {
                     // User already has a subscription
-                    toast.info('You already have an active subscription!');
+                    toast.info('You already have an active subscription! Refreshing...');
+                    await fetchSubscriptionStatus();
                 }
             } else {
                 console.error('Failed to create checkout session:', data.error);

@@ -6,6 +6,8 @@ interface SubscriptionStatus {
     status: 'free' | 'active' | 'trialing' | 'canceled' | 'past_due';
 }
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
     console.log('[STATUS API] Checking subscription status...');
 

@@ -67,16 +67,30 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
                 method: 'POST',
             });
 
+            const data = await response.json();
+
             if (response.ok) {
-                const data = await response.json();
                 if (data.url) {
                     window.location.href = data.url;
                 }
+            } else if (data.alreadySubscribed) {
+                // User already has a subscription - try to sync it and refresh
+                toast.info('You already have an active subscription! Syncing...');
+                try {
+                    await fetch('/api/stripe/sync', { method: 'POST', body: JSON.stringify({}) });
+                    await fetchSubscriptionStatus();
+                    toast.success('Subscription synced! You now have Pro access.');
+                } catch (syncError) {
+                    console.error('Failed to sync subscription:', syncError);
+                    toast.error('Failed to sync subscription. Please try refreshing the page.');
+                }
             } else {
-                console.error('Failed to create checkout session');
+                console.error('Failed to create checkout session:', data.error);
+                toast.error(data.error || 'Failed to create checkout session');
             }
         } catch (error) {
             console.error('Checkout error:', error);
+            toast.error('Failed to start checkout');
         }
     };
 

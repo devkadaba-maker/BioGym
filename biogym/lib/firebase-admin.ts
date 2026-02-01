@@ -11,8 +11,15 @@ function initializeFirebaseAdmin() {
 
         try {
             if (serviceAccountKey) {
-                // Option 1: Use service account key from environment variable
-                const credentials = JSON.parse(serviceAccountKey);
+                // Parse the JSON credentials
+                let credentials = JSON.parse(serviceAccountKey);
+
+                // Fix private key: replace literal \n with actual newlines
+                // This is needed because env vars often store \n as literal characters
+                if (credentials.private_key && typeof credentials.private_key === 'string') {
+                    credentials.private_key = credentials.private_key.replace(/\\n/g, '\n');
+                }
+
                 app = initializeApp({
                     credential: cert(credentials),
                     projectId: credentials.project_id,
@@ -20,7 +27,6 @@ function initializeFirebaseAdmin() {
                 console.log('[Firebase Admin] ✅ Initialized with service account key');
             } else if (projectId) {
                 // Option 2: Use project ID with Application Default Credentials
-                // This works in GCP environments or when `gcloud auth application-default login` has been run
                 try {
                     app = initializeApp({
                         credential: applicationDefault(),
@@ -28,8 +34,7 @@ function initializeFirebaseAdmin() {
                     });
                     console.log('[Firebase Admin] ✅ Initialized with Application Default Credentials');
                 } catch (adcError) {
-                    // Option 3: Initialize without credentials - relies on environment having proper access
-                    // This works when Firestore security rules allow access or in emulator mode
+                    // Option 3: Initialize without credentials
                     app = initializeApp({
                         projectId,
                     });

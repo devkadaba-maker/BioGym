@@ -19,7 +19,7 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'BioGym.ai - Smarter Training, Rapid Gains',
+  title: 'BioGym.fit - Smarter Training, Rapid Gains',
   description: 'Your body is almost there. We take you to the next level with AI anatomical analysis using muscle tissue, fat tissue, and machine learning.',
   keywords: ['fitness', 'AI', 'training', 'body composition', 'physique', 'workout', 'machine learning'],
 }

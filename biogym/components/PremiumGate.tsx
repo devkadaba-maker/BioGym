@@ -61,7 +61,7 @@ export default function PremiumGate({ children, feature, description }: PremiumG
 
                     {/* Description */}
                     <p className="text-gray-400 mb-8 max-w-md mx-auto">
-                        {description || `Upgrade to BioGym Pro to unlock ${feature} and take your training to the next level. Start with a 7-day free trial!`}
+                        {description || `Upgrade to BioGym.fit Pro to unlock ${feature} and take your training to the next level. Start with a 7-day free trial!`}
                     </p>
 
                     {/* Features preview */}

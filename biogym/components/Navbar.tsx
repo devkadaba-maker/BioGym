@@ -44,7 +44,7 @@ export default function Navbar() {
                             strokeLinecap="round"
                         />
                     </svg>
-                    <span className="text-xl font-bold">BioGym</span>
+                    <span className="text-xl font-bold">BioGym.fit</span>
                 </Link>
 
                 {/* Nav Links - Dynamic based on page */}

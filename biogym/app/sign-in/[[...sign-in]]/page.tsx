@@ -15,7 +15,7 @@ export default function SignInPage() {
                     <svg width="40" height="40" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M8 12H24M8 20H24M12 8V24M20 8V24" stroke="#D4FF00" strokeWidth="2.5" strokeLinecap="round" />
                     </svg>
-                    <span className="text-2xl font-bold text-white">BioGym</span>
+                    <span className="text-2xl font-bold text-white">BioGym.fit</span>
                 </div>
 
                 <SignIn

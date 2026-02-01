@@ -114,7 +114,7 @@ export default function DashboardLayout({
                                 <path d="M8 12H24M8 20H24M12 8V24M20 8V24" stroke="#D4FF00" strokeWidth="2.5" strokeLinecap="round" />
                             </svg>
                         </div>
-                        <span className={`text-xl font-bold ${isLight ? "text-gray-900" : "text-white"}`}>BioGym</span>
+                        <span className={`text-xl font-bold ${isLight ? "text-gray-900" : "text-white"}`}>BioGym.fit</span>
                     </Link>
                 </div>
 

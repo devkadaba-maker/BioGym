@@ -94,7 +94,7 @@ export default function Home() {
               The Future of <span className="gradient-text italic">Body Analysis</span>
             </h2>
             <p className="text-xl text-gray-400 max-w-3xl mx-auto">
-              BioGym.ai is a professional AI-driven Physical Composition SaaS designed to help you
+              BioGym.fit is a professional AI-driven Physical Composition SaaS designed to help you
               visualize and track your physique evolution using advanced computer vision.
             </p>
           </div>
@@ -353,7 +353,7 @@ export default function Home() {
                 Get in <span className="gradient-text italic">Touch</span>
               </h2>
               <p className="text-xl text-gray-400 mb-8">
-                Have questions about BioGym.ai? We&apos;d love to hear from you.
+                Have questions about BioGym.fit? We&apos;d love to hear from you.
                 Send us a message and we&apos;ll respond as soon as possible.
               </p>
               <div className="space-y-6">
@@ -387,7 +387,7 @@ export default function Home() {
               <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M8 12H24M8 20H24M12 8V24M20 8V24" stroke="#D4FF00" strokeWidth="2.5" strokeLinecap="round" />
               </svg>
-              <span className="text-xl font-bold">BioGym</span>
+              <span className="text-xl font-bold">BioGym.fit</span>
             </Link>
 
             {/* App Store Buttons */}
@@ -414,7 +414,7 @@ export default function Home() {
 
             {/* Copyright */}
             <div className="text-gray-400 text-sm">
-              © 2024 BioGym.ai. All rights reserved.
+              © 2024 BioGym.fit. All rights reserved.
             </div>
           </div>
         </div>

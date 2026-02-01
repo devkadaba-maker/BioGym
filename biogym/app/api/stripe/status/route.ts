@@ -90,9 +90,17 @@ export async function GET() {
             scansRemaining: isPremium ? -1 : scansRemaining,
         });
     } catch (error) {
-        console.error('[STATUS API] ❌ Error:', error);
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        const errorStack = error instanceof Error ? error.stack : undefined;
+        console.error('[STATUS API] ❌ Error:', errorMessage);
+        console.error('[STATUS API] Stack:', errorStack);
+
+        const isDev = process.env.NODE_ENV === 'development';
         return NextResponse.json(
-            { error: 'Failed to get subscription status' },
+            {
+                error: isDev ? errorMessage : 'Failed to get subscription status',
+                ...(isDev && { stack: errorStack })
+            },
             { status: 500 }
         );
     }

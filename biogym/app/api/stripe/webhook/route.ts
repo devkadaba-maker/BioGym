@@ -160,7 +160,12 @@ export async function POST(request: NextRequest) {
 
         return NextResponse.json({ received: true });
     } catch (error) {
-        console.error('Webhook handler error:', error);
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        const errorStack = error instanceof Error ? error.stack : undefined;
+        console.error('Webhook handler error:', errorMessage);
+        console.error('Webhook handler stack:', errorStack);
+
+        // Webhooks don't need detailed JSON response for the caller (Stripe), but logging is critical
         return NextResponse.json(
             { error: 'Webhook handler failed' },
             { status: 500 }

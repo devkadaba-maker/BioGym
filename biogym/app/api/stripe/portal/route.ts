@@ -46,9 +46,17 @@ export async function POST(request: NextRequest) {
 
         return NextResponse.json({ url: portalSession.url });
     } catch (error) {
-        console.error('Portal session error:', error);
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        const errorStack = error instanceof Error ? error.stack : undefined;
+        console.error('[API /stripe/portal] Error:', errorMessage);
+        console.error('[API /stripe/portal] Stack:', errorStack);
+
+        const isDev = process.env.NODE_ENV === 'development';
         return NextResponse.json(
-            { error: 'Failed to create portal session' },
+            {
+                error: isDev ? errorMessage : 'Failed to create portal session',
+                ...(isDev && { stack: errorStack })
+            },
             { status: 500 }
         );
     }

@@ -102,9 +102,17 @@ export async function POST(request: NextRequest) {
         });
 
     } catch (error) {
-        console.error('[SYNC] Error syncing subscription:', error);
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        const errorStack = error instanceof Error ? error.stack : undefined;
+        console.error('[SYNC] Error syncing subscription:', errorMessage);
+        console.error('[SYNC] Stack:', errorStack);
+
+        const isDev = process.env.NODE_ENV === 'development';
         return NextResponse.json(
-            { error: 'Failed to sync subscription' },
+            {
+                error: isDev ? errorMessage : 'Failed to sync subscription',
+                ...(isDev && { stack: errorStack })
+            },
             { status: 500 }
         );
     }

@@ -15,8 +15,17 @@ export async function GET(request: NextRequest) {
         const logs = await getExerciseLogs(userId, limit);
         return NextResponse.json({ logs });
     } catch (error) {
-        console.error('[API /workouts] Error:', error);
-        return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        const errorStack = error instanceof Error ? error.stack : undefined;
+        console.error('[API /workouts] Error:', errorMessage);
+        console.error('[API /workouts] Stack:', errorStack);
+
+        // Return more info in development, less in production
+        const isDev = process.env.NODE_ENV === 'development';
+        return NextResponse.json({
+            error: isDev ? errorMessage : 'Internal server error',
+            ...(isDev && { stack: errorStack })
+        }, { status: 500 });
     }
 }
 
@@ -37,7 +46,15 @@ export async function POST(request: NextRequest) {
         const docId = await saveExerciseLog(userId, exercise);
         return NextResponse.json({ success: true, id: docId });
     } catch (error) {
-        console.error('[API /workouts] POST Error:', error);
-        return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        const errorStack = error instanceof Error ? error.stack : undefined;
+        console.error('[API /workouts] POST Error:', errorMessage);
+        console.error('[API /workouts] POST Stack:', errorStack);
+
+        const isDev = process.env.NODE_ENV === 'development';
+        return NextResponse.json({
+            error: isDev ? errorMessage : 'Internal server error',
+            ...(isDev && { stack: errorStack })
+        }, { status: 500 });
     }
 }

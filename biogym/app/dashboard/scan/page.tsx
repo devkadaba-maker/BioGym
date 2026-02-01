@@ -178,7 +178,7 @@ export default function ScanLabPage() {
         }
         // Toggle facing mode and restart
         const newMode = facingMode === "environment" ? "user" : "environment";
-        setFacingMode(newMode);
+
         setIsCameraLoading(true);
         setIsCameraReady(false);
         try {
@@ -190,10 +190,46 @@ export default function ScanLabPage() {
                 }
             });
             streamRef.current = stream;
-            // useEffect will attach the stream
+            setFacingMode(newMode);
+            // useEffect will attach the stream when facingMode changes
         } catch {
             setIsCameraLoading(false);
         }
+    };
+
+    // Helper to resize image to max 1024px
+    const resizeImage = (file: File): Promise<string> => {
+        return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    let width = img.width;
+                    let height = img.height;
+                    const maxDim = 1024;
+
+                    if (width > maxDim || height > maxDim) {
+                        if (width > height) {
+                            height = Math.round((height * maxDim) / width);
+                            width = maxDim;
+                        } else {
+                            width = Math.round((width * maxDim) / height);
+                            height = maxDim;
+                        }
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx?.drawImage(img, 0, 0, width, height);
+                    // Compress to 0.8 quality jpeg
+                    resolve(canvas.toDataURL('image/jpeg', 0.8));
+                };
+                img.src = e.target?.result as string;
+            };
+            reader.readAsDataURL(file);
+        });
     };
 
     const captureFromCamera = () => {
@@ -201,28 +237,49 @@ export default function ScanLabPage() {
 
         const video = videoRef.current;
         const canvas = canvasRef.current;
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
+
+        // Calculate dimensions maintaining aspect ratio, max 1024px
+        let width = video.videoWidth;
+        let height = video.videoHeight;
+        const maxDim = 1024;
+
+        if (width > maxDim || height > maxDim) {
+            if (width > height) {
+                height = Math.round((height * maxDim) / width);
+                width = maxDim;
+            } else {
+                width = Math.round((width * maxDim) / height);
+                height = maxDim;
+            }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
 
         const ctx = canvas.getContext("2d");
         if (ctx) {
-            ctx.drawImage(video, 0, 0);
-            const dataUrl = canvas.toDataURL("image/jpeg", 0.9);
+            ctx.drawImage(video, 0, 0, width, height);
+            const dataUrl = canvas.toDataURL("image/jpeg", 0.8);
             setCapturedImages(prev => ({ ...prev, [step.id]: dataUrl }));
             toast.success("Photo captured!");
             stopCamera();
         }
     };
 
-    const processFile = (file: File) => {
+    const processFile = async (file: File) => {
         if (!file.type.startsWith('image/')) return;
-        const reader = new FileReader();
-        reader.onload = () => {
-            const result = reader.result as string;
-            setCapturedImages(prev => ({ ...prev, [step.id]: result }));
+
+        const toastId = toast.loading("Processing image...");
+        try {
+            const resizedDataUrl = await resizeImage(file);
+            setCapturedImages(prev => ({ ...prev, [step.id]: resizedDataUrl }));
+            toast.dismiss(toastId);
             toast.success("Photo uploaded!");
-        };
-        reader.readAsDataURL(file);
+        } catch (error) {
+            console.error("Resize error:", error);
+            toast.dismiss(toastId);
+            toast.error("Failed to process image");
+        }
     };
 
     const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {

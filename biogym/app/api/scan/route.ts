@@ -94,6 +94,7 @@ CRITICAL INSTRUCTIONS:
 6. If a specific image is not provided, state "Image not provided for this region" in the Details
 7. Provide accurate, region-specific analysis based on what you can ACTUALLY SEE in each image
 8. Do NOT copy the same analysis text across different body parts
+9. IMPORTANT: If the user is wearing clothing (e.g., t-shirt, shorts), do your best to infer muscle structure and body composition from the visible shape, fit of the clothing, and any exposed skin. Do NOT refuse to analyze because of clothing.
 
 Analyze these images with precision. Provide density scores, hotspots with coordinates, exercise recommendations, and detailed analysis for each body region. Respond with valid JSON only.`;
 

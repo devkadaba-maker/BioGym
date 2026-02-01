@@ -77,9 +77,18 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
                 // User already has a subscription - try to sync it and refresh
                 toast.info('You already have an active subscription! Syncing...');
                 try {
-                    await fetch('/api/stripe/sync', { method: 'POST', body: JSON.stringify({}) });
-                    await fetchSubscriptionStatus();
-                    toast.success('Subscription synced! You now have Pro access.');
+                    const syncRes = await fetch('/api/stripe/sync', { method: 'POST', body: JSON.stringify({}) });
+                    const syncData = await syncRes.json();
+
+                    if (syncRes.ok && syncData.success) {
+                        await fetchSubscriptionStatus();
+                        toast.success('Subscription synced! You now have Pro access.');
+                        // Force a reload if state doesn't update immediately (optional but safe)
+                        // window.location.reload(); 
+                    } else {
+                        console.error('Sync failed:', syncData);
+                        toast.error(syncData.message || 'Failed to sync. Please contact support.');
+                    }
                 } catch (syncError) {
                     console.error('Failed to sync subscription:', syncError);
                     toast.error('Failed to sync subscription. Please try refreshing the page.');

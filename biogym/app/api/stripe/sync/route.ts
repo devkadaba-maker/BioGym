@@ -61,11 +61,37 @@ export async function POST(request: NextRequest) {
         // No session ID - try to find subscription from Stripe customer
         // First get existing subscription to find customer ID
         const existing = await getSubscription(userId);
+        let stripeCustomerId = existing.stripeCustomerId;
 
-        if (existing.stripeCustomerId) {
+        // Implementation Note: If customer ID is missing (e.g. webhook failed), try to find by email
+        if (!stripeCustomerId) {
+            try {
+                // We need to fetch the user's email from Clerk
+                // Note: We can't use currentUser() here easily because we are already in an async function 
+                // and importing it might conflict or require restructuring. 
+                // Instead, we will assume the client might pass email, or we rely on the webhook to have worked eventually.
+                // BUT, since we are fixing a critical "nothing happens" bug, we should try to get the user.
+                const { currentUser } = await import('@clerk/nextjs/server');
+                const user = await currentUser();
+                const email = user?.emailAddresses?.[0]?.emailAddress;
+
+                if (email) {
+                    console.log(`[SYNC] Looking up Stripe customer by email: ${email}`);
+                    const customers = await stripe.customers.list({ email, limit: 1 });
+                    if (customers.data.length > 0) {
+                        stripeCustomerId = customers.data[0].id;
+                        console.log(`[SYNC] Found Stripe customer ID via email: ${stripeCustomerId}`);
+                    }
+                }
+            } catch (err) {
+                console.warn('[SYNC] Failed to lookup customer by email:', err);
+            }
+        }
+
+        if (stripeCustomerId) {
             // Check for active subscriptions on this customer
             const subscriptions = await stripe.subscriptions.list({
-                customer: existing.stripeCustomerId,
+                customer: stripeCustomerId,
                 limit: 1,
             });
 
@@ -79,7 +105,7 @@ export async function POST(request: NextRequest) {
 
                 await saveSubscription(userId, {
                     status,
-                    stripeCustomerId: existing.stripeCustomerId,
+                    stripeCustomerId: stripeCustomerId,
                     stripeSubscriptionId: subscription.id,
                     currentPeriodEnd: new Date((subscription as any).current_period_end * 1000),
                     cancelAtPeriodEnd: subscription.cancel_at_period_end,

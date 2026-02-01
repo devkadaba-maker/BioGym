@@ -1,4 +1,3 @@
-import { Analytics } from '@vercel/analytics/react'
 import { type Metadata } from 'next'
 import { ClerkProvider } from '@clerk/nextjs'
 import { Inter, Geist_Mono } from 'next/font/google'
@@ -85,7 +84,6 @@ export default function RootLayout({
                 <Navbar />
                 {children}
                 <Toaster position="top-center" richColors />
-                <Analytics />
               </SessionGuard>
             </SubscriptionProvider>
           </ThemeProvider>

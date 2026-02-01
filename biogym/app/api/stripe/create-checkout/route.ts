@@ -116,7 +116,7 @@ export async function POST(request: NextRequest) {
                     clerkUserId: userId,
                 },
             },
-            success_url: `${origin}/dashboard/scan?success=true&session_id={CHECKOUT_SESSION_ID}`,
+            success_url: `${origin}/api/stripe/callback?session_id={CHECKOUT_SESSION_ID}`,
             cancel_url: `${origin}/pricing?canceled=true`,
             metadata: {
                 clerkUserId: userId,

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { stripe } from '@/lib/stripe';
 import { auth } from '@clerk/nextjs/server';
 import { saveSubscription, getSubscription } from '@/lib/firestore-admin';
+import Stripe from 'stripe';
 
 // This endpoint syncs subscription status from Stripe to Firestore
 // Used after checkout completion since webhooks don't work on localhost
@@ -28,18 +29,21 @@ export async function POST(request: NextRequest) {
             });
 
             if (session.subscription) {
-                const subscription = typeof session.subscription === 'string'
+                const subscription = (typeof session.subscription === 'string'
                     ? await stripe.subscriptions.retrieve(session.subscription)
-                    : session.subscription;
+                    : session.subscription) as Stripe.Subscription;
 
-                const status = subscription.status === 'trialing' ? 'trialing' :
-                    subscription.status === 'active' ? 'active' : subscription.status;
+                let status: 'active' | 'trialing' | 'canceled' | 'past_due' = 'canceled';
+                if (subscription.status === 'active') status = 'active';
+                else if (subscription.status === 'trialing') status = 'trialing';
+                else if (subscription.status === 'past_due') status = 'past_due';
+                else if (subscription.status === 'canceled') status = 'canceled';
 
                 await saveSubscription(userId, {
-                    status: status as 'active' | 'trialing' | 'canceled' | 'past_due' | 'inactive',
-                    stripeCustomerId: session.customer as string,
+                    status,
+                    stripeCustomerId: typeof session.customer === 'string' ? session.customer : session.customer?.id,
                     stripeSubscriptionId: subscription.id,
-                    currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+                    currentPeriodEnd: new Date((subscription as any).current_period_end * 1000),
                     cancelAtPeriodEnd: subscription.cancel_at_period_end,
                     trialEnd: subscription.trial_end ? new Date(subscription.trial_end * 1000) : undefined,
                 });
@@ -66,15 +70,18 @@ export async function POST(request: NextRequest) {
             });
 
             if (subscriptions.data.length > 0) {
-                const subscription = subscriptions.data[0];
-                const status = subscription.status === 'trialing' ? 'trialing' :
-                    subscription.status === 'active' ? 'active' : subscription.status;
+                const subscription = subscriptions.data[0] as Stripe.Subscription;
+                let status: 'active' | 'trialing' | 'canceled' | 'past_due' = 'canceled';
+                if (subscription.status === 'active') status = 'active';
+                else if (subscription.status === 'trialing') status = 'trialing';
+                else if (subscription.status === 'past_due') status = 'past_due';
+                else if (subscription.status === 'canceled') status = 'canceled';
 
                 await saveSubscription(userId, {
-                    status: status as 'active' | 'trialing' | 'canceled' | 'past_due' | 'inactive',
+                    status,
                     stripeCustomerId: existing.stripeCustomerId,
                     stripeSubscriptionId: subscription.id,
-                    currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+                    currentPeriodEnd: new Date((subscription as any).current_period_end * 1000),
                     cancelAtPeriodEnd: subscription.cancel_at_period_end,
                     trialEnd: subscription.trial_end ? new Date(subscription.trial_end * 1000) : undefined,
                 });
